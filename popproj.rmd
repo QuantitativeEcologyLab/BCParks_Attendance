@@ -1,10 +1,7 @@
+##Population Projections
+
 ```{r}
-library("usethis")
+
 ```
-```{r}
-git_sitrep()
-```
-```{r}
-usethis::git_sitrep
-```
+
 
