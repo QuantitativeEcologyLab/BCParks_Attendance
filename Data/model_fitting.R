@@ -12,93 +12,224 @@ ok2019_2022$month2 <- factor(ok2019_2022$month,
                              ordered = TRUE,
                              levels = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
 
-#Monthly Models
-m_original <- glm(attendance ~ month2,
+ok2019_2022$date <- paste(paste(ok2019_2022$year, ok2019_2022$month, sep = "-"), 15, sep = "-")
+ok2019_2022$date <- as.POSIXct(ok2019_2022$date, format = "%Y-%b-%d")
+
+##FINTRY MONTHLY
+f_original <- glm(attendance ~ date,
+                  family = Gamma(link="log"),
+                  data = ok2019_2022[which(ok2019_2022$park == "fintry"),])
+AIC(f_original)
+
+f0 <- glm(attendance ~ date + 
+            date + avgtemp + avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "fintry"),])
+AIC(f0)
+#better AIC than original
+
+f1 <- glm(attendance ~ date + 
+            date + avgtemp + avgprecip +
+            avgtemp*date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "fintry"),])
+AIC(f1)
+
+f2 <- glm(attendance ~ date + 
+            avgtemp + avgprecip +
+            avgtemp*date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "fintry"),])
+AIC(f2)
+#adding date doesn't improve AIC, so we can leave it out
+
+f3 <- glm(attendance ~ date + 
+            avgtemp +
+            avgtemp*date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "fintry"),])
+AIC(f3)
+#adding avgprecip doesn't improve AIC, so leave it out
+
+f4 <- glm(attendance ~ date + 
+            avgtemp*date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "fintry"),])
+AIC(f4)
+#adding avgtemp doesn't improve AIC, so leave it out
+
+f5 <- glm(attendance ~ date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "fintry"),])
+AIC(f5)
+#AIC is worse, so include avgtemp*date
+
+f6 <- glm(attendance ~ date +
+            avgtemp*date +
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "fintry"),])
+AIC(f6)
+#AIC is better! drop avgprecip*date
+
+f7 <- glm(attendance ~ date + 
+            avgtemp*date,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "fintry"),])
+AIC(f7)
+#AIC is better! leave out avgtemp*avgprecip
+
+AIC(f_original, f0, f1, f2, f3, f4, f5, f6, f7)
+#f1, f2,  f3, f4 all give the same AIC, so including date, avgtemp, and avgprecip makes no difference
+#looks like f7 is best model (temperature-date is only interaction worth keeping in the model)
+
+##SKAHA MONTHLY
+s_original <- glm(attendance ~ date,
+                  family = Gamma(link="log"),
+                  data = ok2019_2022[which(ok2019_2022$park == "skaha"),])
+AIC(s_original)
+
+s0 <- glm(attendance ~ date + 
+            date + avgtemp + avgprecip +
+            avgtemp*date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "skaha"),])
+AIC(s0)
+
+s1 <- glm(attendance ~ date + 
+            avgtemp + avgprecip +
+            avgtemp*date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "skaha"),])
+AIC(s1)
+#adding date doesn't improve AIC, so leave it out
+
+s2 <- glm(attendance ~ date + 
+            avgtemp +
+            avgtemp*date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "skaha"),])
+AIC(s2)
+#adding avgprecip doesn't improve AIC, so leave it out
+
+s3 <- glm(attendance ~ date + 
+            avgtemp*date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "skaha"),])
+AIC(s3)
+#adding avgtemp doesn't improve AIC, so leave it out
+
+s4 <- glm(attendance ~ date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "skaha"),])
+AIC(s4)
+#AIC is better! leave out avgtemp*date
+
+s5 <- glm(attendance ~ date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "skaha"),])
+AIC(s5)
+#AIC is better! leave out avgprecip*date
+
+s6 <- glm(attendance ~ date + 
+            avgprecip*date,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "skaha"),])
+AIC(s6)
+
+AIC(s_original, s0, s1, s2, s3, s4, s5, s6)
+#s0, s1, s2,  s3 all give the same AIC, so including date, avgtemp, and avgprecip makes no difference
+#looks like s_original is best (no interactions worth keeping in the model)
+
+##MANNING MONTHLY
+m_original <- glm(attendance ~ date,
                 family = Gamma(link="log"),
                 data = ok2019_2022[which(ok2019_2022$park == "manning"),])
 AIC(m_original)
 
-m0 <- glm(attendance ~ month2 + 
-             month2 + avgtemp + avgprecip,
+m0 <- glm(attendance ~ date + 
+             date + avgtemp + avgprecip,
            family = Gamma(link="log"),
            data = ok2019_2022[which(ok2019_2022$park == "manning"),])
 AIC(m0)
-#better AIC than monthfit
+#better AIC than m_original
 
-m1 <- glm(attendance ~ month2 + 
-              month2 + avgtemp + avgprecip +
-              avgtemp*month2 + 
-              avgprecip*month2 + 
+m1 <- glm(attendance ~ date + 
+              date + avgtemp + avgprecip +
+              avgtemp*date + 
+              avgprecip*date + 
               avgtemp*avgprecip,
             family = Gamma(link="log"),
             data = ok2019_2022[which(ok2019_2022$park == "manning"),])
 AIC(m1)
 #AIC much better with these interactions
 
-m3 <- glm(attendance ~ month2 + 
+m2 <- glm(attendance ~ date + 
             avgtemp + avgprecip +
-            avgtemp*month2 + 
-            avgprecip*month2 + 
+            avgtemp*date + 
+            avgprecip*date + 
+            avgtemp*avgprecip,
+          family = Gamma(link="log"),
+          data = ok2019_2022[which(ok2019_2022$park == "manning"),])
+AIC(m2)
+#adding date doesn't improve AIC, so leave it out
+
+m3 <- glm(attendance ~ date + 
+            avgtemp +
+            avgtemp*date + 
+            avgprecip*date + 
             avgtemp*avgprecip,
           family = Gamma(link="log"),
           data = ok2019_2022[which(ok2019_2022$park == "manning"),])
 AIC(m3)
-#adding month2 doesn't improve AIC, so leave it out
+#adding avgprecip doesn't improve AIC, so leave it out
 
-m4 <- glm(attendance ~ month2 + 
-            avgtemp +
-            avgtemp*month2 + 
-            avgprecip*month2 + 
+m4 <- glm(attendance ~ date + 
+            avgtemp*date + 
+            avgprecip*date + 
             avgtemp*avgprecip,
           family = Gamma(link="log"),
           data = ok2019_2022[which(ok2019_2022$park == "manning"),])
 AIC(m4)
-#adding avgprecip doesn't improve AIC, so leave it out
+#adding avgtemp doesn't improve AIC, so leave it out
 
-m5 <- glm(attendance ~ month2 + 
-            avgtemp*month2 + 
-            avgprecip*month2 + 
-            avgtemp*avgprecip,
+m5 <- glm(attendance ~ date +
+            avgtemp*date + 
+            avgprecip*date,
           family = Gamma(link="log"),
           data = ok2019_2022[which(ok2019_2022$park == "manning"),])
 AIC(m5)
-#adding avgtemp doesn't improve AIC, so leave it out
+#AIC is better! leave out avgtemp*avgprecip
 
-m6 <- glm(attendance ~ month2 +
-            avgtemp*month2 + 
-            avgprecip*month2,
+m6 <- glm(attendance ~ date + 
+            avgtemp*date,
           family = Gamma(link="log"),
           data = ok2019_2022[which(ok2019_2022$park == "manning"),])
 AIC(m6)
-#AIC is worse! include avgtemp*avgprecip
+#AIC is worse! include avgprecip*date
 
-m7 <- glm(attendance ~ month2 + 
-            avgtemp*month2 + 
-            avgtemp*avgprecip,
-          family = Gamma(link="log"),
-          data = ok2019_2022[which(ok2019_2022$park == "manning"),])
-AIC(m7)
-#AIC is worse! include avgprecip*month2
+AIC(m_original, m0, m1, m2, m3, m4, m5, m6, m7)
+#m0, m1, m2, m3, m4 all give the same AIC so including date, avgtemp, and avgprecip makes no difference
+#looks like m5 is best (temperature-precipitation interaction isn't worth keeping in the model)
 
-m8 <- glm(attendance ~ month2 + 
-            avgprecip*month2 + 
-            avgtemp*avgprecip,
-          family = Gamma(link="log"),
-          data = ok2019_2022[which(ok2019_2022$park == "manning"),])
-AIC(m8)
-#AIC is worse! include avgtemp*month2
-#it looks like all 3 interactions are worth keeping in the model
-
-AIC(monthfit, m0, m1, m2, m3, m4, m5, m6, m7, m8)
-#m0, m3, m4, m5 all give the same AIC, so including month2, avgtemp, and avgprecip makes no difference
-#looks like m1 is best 
-
-m1 <- glmer(attendance ~ month2 + 
-                   month2 + avgtemp + avgprecip +
-                   avgtemp*month2 + 
-                   avgprecip*month2 + 
-                   avgtemp*avgprecip +
-                   (month2|park),
-                 family = Gamma(link="log"),
-                 data = ok2019_2022[which(ok2019_2022$park == "manning"),])
-#this is what it should be, but glmer doesn't run with the random effects term (or without it!!)
