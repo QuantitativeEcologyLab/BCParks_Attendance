@@ -1,18 +1,21 @@
-setwd("~/Desktop/bio/440/BCParks_Attendance")
-ok1922NA <- read.csv(file = 'Data/ok1922NA.csv')
-ok2019_2022 <- na.omit(ok1922NA)
-ok2019_2022$park <- as.factor(ok2019_2022$park)
-names(ok2019_2022)[names(ok2019_2022) == 'visitorcorrected'] <- 'attendance'
-
 library(lme4)
 library(dplyr)
 library(mgcv)
+library(lubridate)
 
+setwd("~/Desktop/bio/440/BCParks_Attendance")
+ok1922NA <- read.csv(file = 'Data/ok1922NA.csv')
+
+ok2019_2022 <- na.omit(ok1922NA)
+ok2019_2022$park <- as.factor(ok2019_2022$park)
+names(ok2019_2022)[names(ok2019_2022) == 'visitorcorrected'] <- 'attendance'
 ok2019_2022$month2 <- factor(ok2019_2022$month,
                              ordered = TRUE,
-                             levels = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
+                             levels = c("jan", "feb", "mar", "apr", "may", "jun", 
+                                        "jul", "aug", "sep", "oct", "nov", "dec"))
 ok2019_2022$month <- paste(paste(ok2019_2022$year, ok2019_2022$month, sep = "-"), 15, sep = "-")
 ok2019_2022$month <- as.POSIXct(ok2019_2022$month, format = "%Y-%b-%d")
+ok2019_2022$month <- as.numeric(ok2019_2022$month)
 
 ##FINTRY MONTHLY
 f_original <- glm(attendance ~ month,
@@ -245,3 +248,18 @@ AIC(m7)
 AIC(m_original, m0, m1, m2, m3, m4, m5, m6, m7)
 #m1, m2, m3, m4 all give the same AIC so including month, avgtemp, and avgprecip makes no difference
 #looks like m1 is best (all interactions are worth keeping in the model)
+
+
+##GAM for all parks
+# make sure park is a factor & month is a numeric
+M <- gam(attendance ~
+           s(month, park, bs = 'fs', xt = list(bs = 'cc')) +
+           s(avgtemp) + s(avgprecip) + avgtemp:avgprecip +
+           month:avgtemp + month:avgprecip,
+         family = Gamma(link = 'log'),
+         data = ok2019_2022,
+         method = 'REML',
+         knots = list(month = c(0.5, 12.5)))
+
+plot(M, all.terms = TRUE, pages = 1, scale = 0)
+plot(M, all.terms = TRUE, pages = 1, scale = 0, trans = exp)
