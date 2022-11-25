@@ -13,8 +13,9 @@ ok2019_2022$month2 <- factor(ok2019_2022$month,
                              ordered = TRUE,
                              levels = c("jan", "feb", "mar", "apr", "may", "jun", 
                                         "jul", "aug", "sep", "oct", "nov", "dec"))
-ok2019_2022$month <- paste(paste(ok2019_2022$year, ok2019_2022$month, sep = "-"), 15, sep = "-")
-ok2019_2022$month <- as.POSIXct(ok2019_2022$month, format = "%Y-%b-%d")
+ok2019_2022$date <- paste(paste(ok2019_2022$year, ok2019_2022$month, sep = "-"), 15, sep = "-")
+ok2019_2022$date <- as.POSIXct(ok2019_2022$date, format = "%Y-%b-%d")
+ok2019_2022$month <- format(ok2019_2022$date, "%m")
 ok2019_2022$month <- as.numeric(ok2019_2022$month)
 
 ##FINTRY MONTHLY
