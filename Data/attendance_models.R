@@ -1,10 +1,28 @@
+setwd("~/Desktop/bio/440/BCParks_Attendance")
+ok1922NA <- read.csv(file = 'Data/ok1922NA.csv')
+ok2019_2022 <- na.omit(ok1922NA)
 ok2019_2022$park <- as.factor(ok2019_2022$park)
 names(ok2019_2022)[names(ok2019_2022) == 'visitorcorrected'] <- 'attendance'
 
+library(lme4)
+library(ggplot2)
+library(viridis)
+library(dplyr)
+library(mgcv)
+
+ok2019_2022$month2 <- factor(ok2019_2022$month,
+                             ordered = TRUE,
+                             levels = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
+ok2019_2022$date <- paste(paste(ok2019_2022$year, ok2019_2022$month, sep = "-"), 15, sep = "-")
+ok2019_2022$date <- as.POSIXct(ok2019_2022$date, format = "%Y-%b-%d")
+ok2019_2022$month <- format(ok2019_2022$date, "%m")
+ok2019_2022$month <- as.numeric(ok2019_2022$month)
+
+
 ##TEMPERATURE MODEL
 tempfit <- glmer(attendance ~ avgtemp  + (avgtemp|park),
-             family = Gamma(link="log"),
-             data = ok2019_2022)
+                 family = Gamma(link="log"),
+                 data = ok2019_2022)
 
 summary(tempfit)
 
@@ -17,16 +35,16 @@ logit_tempfit <- function(x) {
 
 tempdata <- data.frame(avgtemp = seq(-10,30, 0.1),
                        attendance = logit_tempfit(seq(-10,30, 0.1)))
-  
+
 
 fintrytemp <- data.frame(avgtemp = seq(-10,30, 0.1),
-                    park = "fintry")
+                         park = "fintry")
 
 skahatemp <- data.frame(avgtemp = seq(-10,30, 0.1),
-                    park = "skaha")
+                        park = "skaha")
 
 manningtemp <- data.frame(avgtemp = seq(-10,30, 0.1),
-                    park = "manning")
+                          park = "manning")
 
 fintrytemp$fintry <- predict(tempfit, newdata = fintrytemp, type = "response")
 skahatemp$skaha <- predict(tempfit, newdata = skahatemp, type = "response")
@@ -60,31 +78,35 @@ tempfig <- ggplot() +
 tempfig
 
 ##PRECIPITATION MODEL
-precipfit <- glmer(attendance ~ avgprecip  + (avgprecip|park),
-                 family = Gamma(link="log"),
-                 data = ok2019_2022)
+precipfit <- glmer(attendance ~ avgprecip  + avgtemp + (avgprecip|park),
+                   family = Gamma(link="log"),
+                   data = ok2019_2022)
 
 summary(precipfit)
 
 logit_precipfit <- function(x) {
-  B_0 <- 1.8195
-  B_1 <- -0.1137
+  B_0 <- 0.720613
+  B_1 <- -0.007362
+  B_2 <- 0.064408
   mu = exp(B_0 + B_1*x)
   mu
 }
 
 precipdata <- data.frame(avgprecip = seq(0.1,17, 0.01),
-                       attendance = logit_precipfit(seq(0.1,17, 0.01)))
+                         attendance = logit_precipfit(seq(0.1,17, 0.01)))
 
 
 fintryprecip <- data.frame(avgprecip = seq(0.1,17, 0.01),
-                         park = "fintry")
+                           avgtemp = 10,
+                           park = "fintry")
 
 skahaprecip <- data.frame(avgprecip = seq(0.1,17, 0.01),
-                        park = "skaha")
+                          avgtemp = 10,
+                          park = "skaha")
 
 manningprecip <- data.frame(avgprecip = seq(0.1,17, 0.01),
-                          park = "manning")
+                            avgtemp = 10,
+                            park = "manning")
 
 fintryprecip$fintry <- predict(precipfit, newdata = fintryprecip, type = "response")
 skahaprecip$skaha <- predict(precipfit, newdata = skahaprecip, type = "response")
@@ -99,7 +121,7 @@ precipfig <- ggplot() +
   geom_line(data = skahaprecip, aes(x = avgprecip, y = skaha), se = F, span = 1.5, col = "grey40", size = 0.5) +
   geom_line(data = manningprecip, aes(x = avgprecip, y = manning), se = F, span = 1.5, col = "grey40", size = 0.5) +
   
-  scale_y_continuous(limits = c(0,20), expand = c(0,1)) +
+  scale_y_continuous(limits = c(0,45), expand = c(0,1)) +
   scale_color_viridis(discrete = T) +
   xlab("Average Monthly Precipitation (mm)") +
   ylab("Park Visitors (per 1000 people)") +
@@ -152,7 +174,7 @@ skahapop$skaha <- predict(popfit, newdata = skahapop, type = "response")
 manningpop$manning <- predict(popfit, newdata = manningpop, type = "response")
 
 #FIG <- 
-ggplot() +
+popfig <- ggplot() +
   geom_point(data = ok2019_2022, aes(y = attendance, x = population, col = park),
              alpha = 1, stroke = 0, shape=16, size = 2) +
   geom_smooth(data = popdata, aes(x = population, y = attendance), se = F, span = 1.5, col = "black", size = 1.25) +
@@ -176,32 +198,39 @@ ggplot() +
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+popfig
 
 ##MONTH MODEL FOR EACH PARK
 monthfit <- glmer(attendance ~ month + (month|park),
-                   family = Gamma(link="log"),
-                   data = ok2019_2022)
+                  family = Gamma(link="log"),
+                  data = ok2019_2022)
 
-summary(monthfit)
+fintrymonth <- data.frame(date = unique(ok2019_2022$date),
+                          avgtemp = median(ok2019_2022$avgtemp),
+                          avgprecip = median(ok2019_2022$avgprecip),
+                          park = "fintry")
+fintrymonth$attendance <- predict(monthfit, newdata = fintrymonth, type = "response")
+fintrymonth$month <- format(fintrymonth$date, "%m")
 
-fintrymonth <- data.frame(month = unique(ok2019_2022$month),
-                           park = "fintry")
+skahamonth <- data.frame(date = unique(ok2019_2022$date),
+                         avgtemp = median(ok2019_2022$avgtemp),
+                         avgprecip = median(ok2019_2022$avgprecip),
+                         park = "skaha")
+skahamonth$attendance <- predict(monthfit, newdata = skahamonth, type = "response")
+skahamonth$month <- format(skahamonth$date, "%m")
 
-skahamonth <- data.frame(month = unique(ok2019_2022$month),
-                          park = "skaha")
+manningmonth <- data.frame(date = unique(ok2019_2022$date),
+                           avgtemp = median(ok2019_2022$avgtemp),
+                           avgprecip = median(ok2019_2022$avgprecip),
+                           park = "manning")
+manningmonth$attendance <- predict(monthfit, newdata = manningmonth, type = "response")
+manningmonth$month <- format(manningmonth$date, "%m")
 
-manningmonth <- data.frame(month = unique(ok2019_2022$month),
-                            park = "manning")
-
-fintrymonth$fintry <- predict(monthfit, newdata = fintrymonth, type = "response")
-skahamonth$skaha <- predict(monthfit, newdata = skahamonth, type = "response")
-manningmonth$manning <- predict(monthfit, newdata = manningmonth, type = "response")
-
-#FIG <- 
-fintrymonthly <- ggplot() +
-  geom_boxplot(data = ok2019_2022, aes(x = month, y = attendance), alpha = 0.5) +
-  geom_point(data = fintrymonth, aes(x = month, y = fintry, size = fintry), col = "royalblue") +
-  scale_y_continuous(limits = c(0,22), expand = c(0,1)) +
+fintrymonthly <- 
+  ggplot() +
+  geom_boxplot(data = ok2019_2022[which(ok2019_2022$park == "fintry"),], aes(x = month, y = attendance), alpha = 0.5) +
+  geom_point(data = fintrymonth, aes(x = month, y = attendance), size = 2, col = "royalblue") +
+  scale_y_continuous(limits = c(0,17), expand = c(0,1)) +
   scale_x_discrete(limits = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")) +
   scale_color_viridis(discrete = T) +
   xlab("Month") +
@@ -220,10 +249,11 @@ fintrymonthly <- ggplot() +
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 fintrymonthly
 
-skahamonthly <- ggplot() +
-  geom_boxplot(data = ok2019_2022, aes(x = month, y = attendance), alpha = 0.5) +
-  geom_point(data = skahamonth, aes(x = month, y = skaha, size = skaha), col = "royalblue") +
-  scale_y_continuous(limits = c(0,22), expand = c(0,1)) +
+skahamonthly <- 
+  ggplot() +
+  geom_boxplot(data = ok2019_2022[which(ok2019_2022$park == "skaha"),], aes(x = month, y = attendance), alpha = 0.5) +
+  geom_point(data = skahamonth, aes(x = month2, y = attendance), size = 2, col = "royalblue") +
+  scale_y_continuous(limits = c(0,20), expand = c(0,1)) +
   scale_x_discrete(limits = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")) +
   scale_color_viridis(discrete = T) +
   xlab("Month") +
@@ -242,10 +272,11 @@ skahamonthly <- ggplot() +
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 skahamonthly
 
-manningmonthly <- ggplot() +
-  geom_boxplot(data = ok2019_2022, aes(x = month, y = attendance), alpha = 0.5) +
-  geom_point(data = manningmonth, aes(x = month, y = manning, size = manning), col = "royalblue") +
-  scale_y_continuous(limits = c(0,22), expand = c(0,1)) +
+manningmonthly <- 
+  ggplot() +
+  geom_boxplot(data = ok2019_2022[which(ok2019_2022$park == "manning"),], aes(x = month2, y = attendance), alpha = 0.5) +
+  geom_point(data = manningmonth, aes(x = month2, y = attendance), size = 2, col = "royalblue") +
+  scale_y_continuous(limits = c(0,60), expand = c(0,1)) +
   scale_x_discrete(limits = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")) +
   scale_color_viridis(discrete = T) +
   xlab("Month") +
@@ -264,6 +295,89 @@ manningmonthly <- ggplot() +
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 manningmonthly
 
+##NEW MONTHLY FIGS using GAM
+M <- gam(attendance ~
+           s(month, park, bs = 'fs', xt = list(bs = 'cc')) +
+           s(avgtemp) + s(avgprecip) + avgtemp:avgprecip +
+           month:avgtemp + month:avgprecip,
+         family = Gamma(link = 'log'),
+         data = ok2019_2022,
+         method = 'REML',
+         knots = list(month = c(0.5, 12.5)))
+ok2019_2022$prediction <- predict(M, type = "response")
+fintry <- filter(ok2019_2022, park == "fintry")
+skaha <- filter(ok2019_2022, park == "skaha")
+manning <- filter(ok2019_2022, park == "manning")
+
+fintrygam <- 
+  ggplot() +
+  geom_boxplot(data = fintry, aes(x = month, y = attendance, group = cut_width(month, 1), alpha = 0.5)) +
+  geom_point(data = fintry, aes(x = month, y = prediction), size = 2, col = "royalblue") +
+  scale_y_continuous(limits = c(0,5)) +
+  scale_color_viridis(discrete = T) +
+  xlab("Month") +
+  ylab("Park Visitors (per 1000 people)") +
+  ggtitle("Fintry Attendance") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=10, family = "sans"),
+        axis.text.x  = element_text(size=8, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
+        legend.position = "none",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+fintrygam
+
+skahagam <- 
+  ggplot() +
+  geom_boxplot(data = skaha, aes(x = month, y = attendance, group = cut_width(month, 1), alpha = 0.5)) +
+  geom_point(data = skaha, aes(x = month, y = prediction), size = 2, col = "royalblue") +
+  scale_y_continuous(limits = c(0,5)) +
+  scale_color_viridis(discrete = T) +
+  xlab("Month") +
+  ylab("Park Visitors (per 1000 people)") +
+  ggtitle("Skaha Attendance") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=10, family = "sans"),
+        axis.text.x  = element_text(size=8, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
+        legend.position = "none",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+skahagam
+
+manninggam <- 
+  ggplot() +
+  geom_boxplot(data = manning, aes(x = month, y = attendance, group = cut_width(month, 1), alpha = 0.5)) +
+  geom_point(data = manning, aes(x = month, y = prediction), size = 2, col = "royalblue") +
+  scale_y_continuous(limits = c(0,46)) +
+  scale_color_viridis(discrete = T) +
+  xlab("Month") +
+  ylab("Park Visitors (per 1000 people)") +
+  ggtitle("Manning Attendance") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=10, family = "sans"),
+        axis.text.x  = element_text(size=8, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
+        legend.position = "none",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+manninggam
+
 ##PRECIP/TEMP BY MONTH
 january <- filter(ok2019_2022, month == "jan")
 february <- filter(ok2019_2022, month == "feb")
@@ -280,7 +394,7 @@ december <- filter(ok2019_2022, month == "dec")
 
 #January
 janfig <- ggplot() +
-  geom_point(data = january, aes(y = avgprecip, x = avgtemp), size = january$attendance) +
+  geom_point(data = january, aes(y = avgprecip, x = avgtemp), size = log(january$attendance)) +
   
   scale_y_continuous(limits = c(5,6)) +
   scale_color_viridis(discrete = T) +
@@ -304,7 +418,7 @@ janfig
 
 #February
 febfig <- ggplot() +
-  geom_point(data = february, aes(y = avgprecip, x = avgtemp), size = february$attendance) +
+  geom_point(data = february, aes(y = avgprecip, x = avgtemp), size = log(february$attendance)) +
   
   scale_y_continuous(limits = c(3,10)) +
   scale_color_viridis(discrete = T) +
@@ -328,7 +442,7 @@ febfig
 
 #March
 marfig <- ggplot() +
-  geom_point(data = march, aes(y = avgprecip, x = avgtemp), size = march$attendance) +
+  geom_point(data = march, aes(y = avgprecip, x = avgtemp), size = log(march$attendance)) +
   
   scale_y_continuous(limits = c(0,3)) +
   scale_color_viridis(discrete = T) +
@@ -352,9 +466,10 @@ marfig
 
 #April
 aprfig <- ggplot() +
-  geom_point(data = april, aes(y = avgprecip, x = avgtemp), size = april$attendance) +
-
+  geom_point(data = april, aes(y = avgprecip, x = avgtemp), size = log(april$attendance)) +
+  
   scale_y_continuous(limits = c(0,5)) +
+  scale_x_continuous(limits = c(3,10)) +
   scale_color_viridis(discrete = T) +
   xlab("Average Temperature (ºC)") +
   ylab("Precipitation (mm)") +
@@ -376,9 +491,9 @@ aprfig
 
 #May
 mayfig <- ggplot() +
-  geom_point(data = may, aes(y = avgprecip, x = avgtemp), size = may$attendance) +
-
-  scale_y_continuous(limits = c(0,3)) +
+  geom_point(data = may, aes(y = avgprecip, x = avgtemp), size = log(may$attendance)) +
+  
+  scale_y_continuous(limits = c(0,2.5)) +
   scale_color_viridis(discrete = T) +
   xlab("Average Temperature (ºC)") +
   ylab("Precipitation (mm)") +
@@ -400,7 +515,7 @@ mayfig
 
 #June
 junefig <- ggplot() +
-  geom_point(data = june, aes(y = avgprecip, x = avgtemp), size = june$attendance) +
+  geom_point(data = june, aes(y = avgprecip, x = avgtemp), size = log(june$attendance)) +
   
   scale_y_continuous(limits = c(0,3)) +
   scale_color_viridis(discrete = T) +
@@ -424,9 +539,9 @@ junefig
 
 #July
 julyfig <- ggplot() +
-  geom_point(data = july, aes(y = avgprecip, x = avgtemp), size = july$attendance) +
+  geom_point(data = july, aes(y = avgprecip, x = avgtemp), size = log(july$attendance)) +
   
-  scale_y_continuous(limits = c(0,3)) +
+  scale_y_continuous(limits = c(0,2)) +
   scale_color_viridis(discrete = T) +
   xlab("Average Temperature (ºC)") +
   ylab("Precipitation (mm)") +
@@ -448,7 +563,7 @@ julyfig
 
 #August
 augfig <- ggplot() +
-  geom_point(data = august, aes(y = avgprecip, x = avgtemp), size = august$attendance) +
+  geom_point(data = august, aes(y = avgprecip, x = avgtemp), size = log(august$attendance)) +
   
   scale_y_continuous(limits = c(0,3)) +
   scale_color_viridis(discrete = T) +
@@ -473,7 +588,7 @@ augfig
 
 #September
 septfig <- ggplot() +
-  geom_point(data = september, aes(y = avgprecip, x = avgtemp), size = september$attendance) +
+  geom_point(data = september, aes(y = avgprecip, x = avgtemp), size = log(september$attendance)) +
   
   scale_y_continuous(limits = c(0,3)) +
   scale_color_viridis(discrete = T) +
@@ -497,9 +612,10 @@ septfig
 
 #Oct
 octfig <- ggplot() +
-  geom_point(data = october, aes(y = avgprecip, x = avgtemp), size = october$attendance) +
+  geom_point(data = october, aes(y = avgprecip, x = avgtemp), size = log(october$attendance)) +
   
-  scale_y_continuous(limits = c(0,2)) +
+  scale_y_continuous(limits = c(0.5,2)) +
+  scale_x_continuous(limits = c(6.75,9.25)) +
   scale_color_viridis(discrete = T) +
   xlab("Average Temperature (ºC)") +
   ylab("Precipitation (mm)") +
@@ -521,7 +637,7 @@ octfig
 
 #November
 novfig <- ggplot() +
-  geom_point(data = november, aes(y = avgprecip, x = avgtemp), size = november$attendance) +
+  geom_point(data = november, aes(y = avgprecip, x = avgtemp), size = log(november$attendance)) +
   
   scale_y_continuous(limits = c(0,17)) +
   scale_color_viridis(discrete = T) +
@@ -545,7 +661,7 @@ novfig
 
 #December
 decfig <- ggplot() +
-  geom_point(data = december, aes(y = avgprecip, x = avgtemp), size = december$attendance) +
+  geom_point(data = december, aes(y = avgprecip, x = avgtemp), size = log(december$attendance)) +
   
   scale_y_continuous(limits = c(8,9)) +
   scale_color_viridis(discrete = T) +
