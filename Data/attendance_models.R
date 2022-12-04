@@ -297,23 +297,33 @@ manningmonthly
 
 ##NEW MONTHLY FIGS using GAM
 M <- gam(attendance ~
-           s(month, park, bs = 'fs', xt = list(bs = 'cc')) +
-           s(avgtemp) + s(avgprecip) + avgtemp:avgprecip +
-           month:avgtemp + month:avgprecip,
+           s(month, park, bs = 'fs', xt = list(bs = 'cc'), k = 11) +
+           s(avgtemp) + s(log(avgprecip)) + avgtemp:log(avgprecip) +
+           month:avgtemp + month:log(avgprecip),
          family = Gamma(link = 'log'),
-         data = ok2019_2022,
+         data = ok2019_2022[-which(ok2019_2022$attendance>120),],
          method = 'REML',
          knots = list(month = c(0.5, 12.5)))
-ok2019_2022$prediction <- predict(M, type = "response")
+ok2019_2022[-which(ok2019_2022$attendance>120),]$prediction <- predict(M, type = "response")
 fintry <- filter(ok2019_2022, park == "fintry")
 skaha <- filter(ok2019_2022, park == "skaha")
 manning <- filter(ok2019_2022, park == "manning")
 
+
+fintrymonth <- aggregate(avgtemp ~ month, data = ok2019_2022, FUN = "median")
+fintrymonth$avgprecip <- aggregate(avgprecip ~ month, data = ok2019_2022, FUN = "median")$avgprecip
+fintrymonth$park <- "fintry"
+
+str(fintrymonth)
+str(ok2019_2022)
+fintrymonth$prediction <- predict(M, newdata = fintrymonth, type = "response")
+
 fintrygam <- 
   ggplot() +
   geom_boxplot(data = fintry, aes(x = month, y = attendance, group = cut_width(month, 1), alpha = 0.5)) +
-  geom_point(data = fintry, aes(x = month, y = prediction), size = 2, col = "royalblue") +
+  geom_point(data = fintrymonth, aes(x = month, y = prediction), size = 2, col = "royalblue") +
   scale_y_continuous(limits = c(0,5)) +
+  scale_x_continuous(limits = c(0,12)) +
   scale_color_viridis(discrete = T) +
   xlab("Month") +
   ylab("Park Visitors (per 1000 people)") +
@@ -332,10 +342,15 @@ fintrygam <-
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 fintrygam
 
+skahamonth <- aggregate(avgtemp ~ month, data = ok2019_2022, FUN = "median")
+skahamonth$avgprecip <- aggregate(avgprecip ~ month, data = ok2019_2022, FUN = "median")$avgprecip
+skahamonth$park <- "skaha"
+skahamonth$prediction <- predict(M, newdata = skahamonth, type = "response")
+
 skahagam <- 
   ggplot() +
   geom_boxplot(data = skaha, aes(x = month, y = attendance, group = cut_width(month, 1), alpha = 0.5)) +
-  geom_point(data = skaha, aes(x = month, y = prediction), size = 2, col = "royalblue") +
+  geom_point(data = skahamonth, aes(x = month, y = prediction), size = 2, col = "royalblue") +
   scale_y_continuous(limits = c(0,5)) +
   scale_color_viridis(discrete = T) +
   xlab("Month") +
@@ -355,10 +370,15 @@ skahagam <-
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 skahagam
 
+manningmonth <- aggregate(avgtemp ~ month, data = ok2019_2022, FUN = "median")
+manningmonth$avgprecip <- aggregate(avgprecip ~ month, data = ok2019_2022, FUN = "median")$avgprecip
+manningmonth$park <- "manning"
+manningmonth$prediction <- predict(M, newdata = manningmonth, type = "response")
+
 manninggam <- 
   ggplot() +
   geom_boxplot(data = manning, aes(x = month, y = attendance, group = cut_width(month, 1), alpha = 0.5)) +
-  geom_point(data = manning, aes(x = month, y = prediction), size = 2, col = "royalblue") +
+  geom_point(data = manningmonth, aes(x = month, y = prediction), size = 2, col = "royalblue") +
   scale_y_continuous(limits = c(0,46)) +
   scale_color_viridis(discrete = T) +
   xlab("Month") +
