@@ -275,7 +275,7 @@ ok2019_2022$ssp <- "Historical" #dataset needs an 'ssp' column
 ggplot(data = climateHG[which(climateHG$park == "manning"),], 
        aes(x = year, y = predicted_visitors, col = ssp)) +
   geom_smooth(size=1, se = F) +
-  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "manning"),], aes(x = year, y = visitortotal), size = 1, se = F) +
+  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "manning"),], aes(x = year, y = visitortotal), size = 1, col = "black", se = F) +
   xlab("Year") +
   ylab("Predicted Monthly Visitors") +
   ggtitle("Manning Attendance under High Population Growth") +
@@ -297,15 +297,10 @@ ggplot(data = climateHG[which(climateHG$park == "manning"),],
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 
-#why is the historical line so funky?!! leave it out for now, i guess?
-ggplot() +
-  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "manning"),], aes(x = year, y = visitortotal), size = 1, se = F)
-  
-
 ggplot(data = climateHG[which(climateHG$park == "fintry"),], 
        aes(x = year, y = predicted_visitors, col = ssp)) +
   geom_smooth(size=1, se = F) +
-  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "fintry"),], aes(x = year, y = visitortotal), size = 1, se = F) +
+  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "fintry"),], aes(x = year, y = visitortotal),  col = "black", size = 1, se = F) +
   xlab("Year") +
   ylab("Predicted Monthly Visitors") +
   ggtitle("Fintry Attendance under High Population Growth") +
@@ -329,7 +324,7 @@ ggplot(data = climateHG[which(climateHG$park == "fintry"),],
 ggplot(data = climateHG[which(climateHG$park == "skaha"),], 
        aes(x = year, y = predicted_visitors, col = ssp)) +
   geom_smooth(size=1, se = F) +
-  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "skaha"),], aes(x = year, y = visitortotal), size = 1, se = F) +
+  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "skaha"),], aes(x = year, y = visitortotal),  col = "black", size = 1, se = F) +
   xlab("Year") +
   ylab("Predicted Monthly Visitors") +
   ggtitle("Skaha Attendance under High Population Growth") +
@@ -356,7 +351,7 @@ ggplot(data = climateHG[which(climateHG$park == "skaha"),],
 ggplot(data = climateLG[which(climateLG$park == "manning"),], 
        aes(x = year, y = predicted_visitors, col = ssp)) +
   geom_smooth(size=1, se = F) +
-  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "manning"),], aes(x = year, y = visitortotal), size = 1, se = F) +
+  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "manning"),], aes(x = year, y = visitortotal), col = "black",  size = 1, se = F) +
   xlab("Year") +
   ylab("Predicted Monthly Visitors") +
   ggtitle("Manning Attendance under Low Population Growth") +
@@ -382,7 +377,7 @@ ggplot(data = climateLG[which(climateLG$park == "manning"),],
 ggplot(data = climateLG[which(climateLG$park == "fintry"),], 
        aes(x = year, y = predicted_visitors, col = ssp)) +
   geom_smooth(size=1, se = F) +
-  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "fintry"),], aes(x = year, y = visitortotal), size = 1, se = F) +
+  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "fintry"),], aes(x = year, y = visitortotal), col = "black", size = 1, se = F) +
   xlab("Year") +
   ylab("Predicted Monthly Visitors") +
   ggtitle("Fintry Attendance under Low Population Growth") +
@@ -406,7 +401,7 @@ ggplot(data = climateLG[which(climateLG$park == "fintry"),],
 ggplot(data = climateLG[which(climateLG$park == "skaha"),], 
        aes(x = year, y = predicted_visitors, col = ssp)) +
   geom_smooth(size=1, se = F) +
-  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "skaha"),], aes(x = year, y = visitortotal), size = 1, se = F) +
+  geom_smooth(data = ok2019_2022[which(ok2019_2022$park == "skaha"),], aes(x = year, y = visitortotal), col = "black",  size = 1, se = F) +
   xlab("Year") +
   ylab("Predicted Monthly Visitors") +
   ggtitle("Skaha Attendance under Low Population Growth") +
@@ -423,51 +418,6 @@ ggplot(data = climateLG[which(climateLG$park == "skaha"),],
         legend.position = "right",
         legend.title = element_text(size = 12, family = "sans"),
         legend.box.background = element_rect(color = "black"),
-        panel.background = element_rect(fill = "transparent"),
-        plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
-
-
-#Compare historical temps vs. predicted temps
-library(viridis)
-ggplot() +
-  geom_boxplot(data = ok2019_2022, aes(x = month, y = avgtemp, group = cut_width(month, 1), alpha = 0.5)) +
-  geom_point(data = climate, aes(x = month, y = avgtemp, col = period), size = 2) +
-  scale_y_continuous(limits = c(0,30)) +
-  scale_color_viridis(discrete = T) +
-  xlab("Month") +
-  ylab("Temperature") +
-  ggtitle("Temperature") +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
-        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
-        axis.text.y = element_text(size=10, family = "sans"),
-        axis.text.x  = element_text(size=8, family = "sans"),
-        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
-        legend.position = "none",
-        panel.background = element_rect(fill = "transparent"),
-        plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
-#Compare historical precipitation vs. predicted precipitation
-ggplot() +
-  geom_boxplot(data = ok2019_2022, aes(x = month, y = avgprecip, group = cut_width(month, 1), alpha = 0.5)) +
-  geom_point(data = climate[which(climate$ssp == "2-4.5"),], aes(x = month, y = avgprecip, col = period), size = 2) +
-  #scale_y_continuous(limits = c(0,80)) +
-  scale_color_viridis(discrete = T) +
-  xlab("Month") +
-  ylab("Total precipitation") +
-  ggtitle("Total precipitation") +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
-        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
-        axis.text.y = element_text(size=10, family = "sans"),
-        axis.text.x  = element_text(size=8, family = "sans"),
-        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
-        legend.position = "none",
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
