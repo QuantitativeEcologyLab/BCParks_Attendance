@@ -5,9 +5,9 @@ library('stringi')
 library('lubridate')
 
 #' *needs comments*
-d <-
+historicaldata <-
   map_dfr(
-    list.files('Data/historical-climate', full.names = TRUE)[1],
+    list.files('Data/historical-climate', full.names = TRUE),
     \(.fname) {
       readr::read_csv(.fname, col_types = '?') %>%
         mutate(file = .fname)
@@ -35,15 +35,15 @@ d <-
          next_year = if_else(month != '12', year, year + 1),
          last_day = as.Date(paste(next_year, next_month, '01', sep = '-')),
          samples = as.numeric((last_day - first_day)),
-         tot_precip = PPT / samples,
-         tot_precip = tot_precip / 1e3) %>% # convert to meters from millimeters
+         avgprecip = PPT / samples,
+         avgprecip = avgprecip / 1e3) %>% # convert to meters from millimeters
   # drop temporary columns
   select(-c(first_day, next_month, next_year, last_day, samples, PPT)) %>%
   # change to names used in the models
-  rename(temperature = Tave,
+  rename(avgtemp = Tave,
          latitude = Latitude,
          longitude = Longitude,
          elevation = Elevation) %>%
   relocate(c(month, dec_date), .after = year)
 
-saveRDS(d, 'Data/historical-climate-data.rds')
+saveRDS(historicaldata, 'Data/historical-climate-data.rds')
