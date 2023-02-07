@@ -1,0 +1,3 @@
+load("/Users/daynakade/Desktop/bio/440/BCParks_Attendance/Data/climate-yearly-projections.rds")
+load("/Users/daynakade/Desktop/bio/440/BCParks_Attendance/Data/historical-climate-data.rds")
+load("/Users/daynakade/Desktop/bio/440/BCParks_Attendance/Data/historical-climate-data.rds")

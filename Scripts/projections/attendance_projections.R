@@ -151,8 +151,7 @@ ggplot(data = climateLG[which(climateLG$park == "skaha"),],
 
 
 #Plot Visitor Counts under High Population Growth
-#disable scientific notation (for y axis)
-options(scipen = 999) 
+options(scipen = 999) #disable scientific notation (for y axis)
 
 ggplot(data = climateHG[which(climateHG$park == "manning"),], 
        aes(x = month, y = predicted_visitors, col = period)) +

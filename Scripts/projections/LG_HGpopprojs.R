@@ -1,4 +1,7 @@
-data <- read.csv("Data/popgrowth.csv")
+library(lme4)
+setwd("~/Desktop/bio/440/BCParks_Attendance/Data")
+
+data <- read.csv("popgrowth.csv")
 data$scenario <- as.factor(data$scenario)
 data$growth2 <- data$growthrate/100
 

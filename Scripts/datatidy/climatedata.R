@@ -385,4 +385,3 @@ climate <- rbind(ssp1, ssp2, ssp3, ssp5)
 climate$date <- paste(paste(climate$year, climate$month, sep = "-"), 15, sep = "-")
 climate$date <- as.POSIXct(climate$date, format = "%Y-%m-%d")
 
-

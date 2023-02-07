@@ -1,18 +1,14 @@
-setwd("~/Desktop/bio/440/BCParks_Attendance")
-ok1922NA <- read.csv(file = 'Data/ok1922NA.csv')
-ok2019_2022 <- na.omit(ok1922NA)
-ok2019_2022$park <- as.factor(ok2019_2022$park)
-names(ok2019_2022)[names(ok2019_2022) == 'visitorcorrected'] <- 'attendance'
-
 library(lme4)
 library(ggplot2)
 library(viridis)
 library(dplyr)
 library(mgcv)
 
-ok2019_2022$month2 <- factor(ok2019_2022$month,
-                             ordered = TRUE,
-                             levels = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
+setwd("~/Desktop/bio/440/BCParks_Attendance")
+ok1922NA <- read.csv(file = 'Data/ok1922NA.csv')
+ok2019_2022 <- na.omit(ok1922NA)
+ok2019_2022$park <- as.factor(ok2019_2022$park)
+names(ok2019_2022)[names(ok2019_2022) == 'visitorcorrected'] <- 'attendance'
 ok2019_2022$date <- paste(paste(ok2019_2022$year, ok2019_2022$month, sep = "-"), 15, sep = "-")
 ok2019_2022$date <- as.POSIXct(ok2019_2022$date, format = "%Y-%b-%d")
 ok2019_2022$month <- format(ok2019_2022$date, "%m")
