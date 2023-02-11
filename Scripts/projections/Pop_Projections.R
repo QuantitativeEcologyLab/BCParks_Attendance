@@ -3,7 +3,7 @@ library(lme4)
 library(ggplot2)
 library(viridis)
 
-data <- read.csv("Data/popgrowth.csv")
+data <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/population/popgrowth.csv")
 data$scenario <- as.factor(data$scenario)
 data$growth2 <- data$growthrate/100
 

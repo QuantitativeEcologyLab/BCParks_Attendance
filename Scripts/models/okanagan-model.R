@@ -4,7 +4,7 @@ library(ggplot2)
 library(dplyr)
 library(mgcv)
 
-ok2019_2022 <- read.csv(file = 'Data/ok1922NA.csv')
+ok2019_2022 <- read.csv('Data/bcparks/ok1922NA.csv')
 ok2019_2022 <- na.omit(ok2019_2022)
 ok2019_2022$park <- as.factor(ok2019_2022$park)
 names(ok2019_2022)[names(ok2019_2022) == 'visitorcorrected'] <- 'attendance'
@@ -14,7 +14,7 @@ ok2019_2022$month <- format(ok2019_2022$date, "%m")
 ok2019_2022$month <- as.numeric(ok2019_2022$month)
 ok2019_2022 <- ok2019_2022[-which(ok2019_2022$attendance>120),] #remove outlier from dataset
 
-M <- gam(attendance ~
+M_olddata <- gam(attendance ~
            s(month, park, bs = 'fs', xt = list(bs = 'cc'), k = 11) +
            s(avgtemp) + s(log(avgprecip)) + avgtemp:log(avgprecip) +
            month:avgtemp + month:log(avgprecip),
