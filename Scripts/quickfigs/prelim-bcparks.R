@@ -1,11 +1,12 @@
 #Source in BC Parks data
 source("~/Desktop/bio/440/BCParks_Attendance/Data/newdata_tidying.R")
 
+library(viridis)
 
 #Attendance/temp relationship for camping
 ggplot() +
   geom_smooth(data = bcparks[which(bcparks$attendancetype == "camping"),], aes(y = attendance, x = avgtemp, col = region),
-             alpha = 0.5, size = 1, se = F, span =0.1) +
+             alpha = 0.5, se = F, span =0.1) +
   scale_color_viridis(discrete = T) +
   xlab("Average Monthly Temperature (ºC)") +
   ylab("Park Visitors (per 1000 people)") +
@@ -113,7 +114,6 @@ ggplot() +
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 
 #Day use attendance over the last decade
-#FIG <- 
 ggplot() +
   #geom_point(data = bcparks[which(bcparks$attendancetype == "dayuse"),], aes(y = attendance, x = date, col = region),
    #          alpha = 0.3, size = 1) +
@@ -138,4 +138,23 @@ ggplot() +
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 
-ggsave(FIG, )
+#Attendance/population relationship 
+ggplot() +
+  geom_smooth(data = bcparks, aes(y = visitortotal, x = BCpop, col = region),
+              alpha = 0.5, se = F, span =0.1) +
+  scale_color_viridis(discrete = T) +
+  xlab("BC Population") +
+  ylab("Park Visitors") +
+  ggtitle("Park Attendance and Population") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=10, family = "sans"),
+        axis.text.x  = element_text(size=8, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 15, family = "sans", face = "bold"),
+        legend.position = "right",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
