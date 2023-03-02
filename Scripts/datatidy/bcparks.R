@@ -2,9 +2,8 @@ library(tidyr)
 library(readr)
 library(dplyr)
 
-#Source in historical climate data
-source("~/Desktop/bio/440/BCParks_Attendance/Scripts/datatidy/bind-historical-climate-data.R")
-
+#Import historical climate data
+historicaldata = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/historical-climate-data.rds")
 
 #Import Camping and Day-use data 
 setwd("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks")
@@ -14,8 +13,8 @@ dayuse <- read.csv("dayuse.csv", na = "0", check.names = FALSE)
 camping <- gather(camping, date, visitortotal, "2010-01-01":"2019-12-01", factor_key = TRUE)
 dayuse <- gather(dayuse, date, visitortotal, "2010-01-01":"2019-12-01", factor_key = TRUE)
 #Remove months with no values (NAs)
-camping <- na.omit(camping)
-dayuse <- na.omit(dayuse)
+#camping <- na.omit(camping)
+#dayuse <- na.omit(dayuse)
 #Classify type of attendance
 camping$attendancetype <- "camping"
 dayuse$attendancetype <- "dayuse"
@@ -51,7 +50,7 @@ bcparks$attendance <- bcparks$visitortotal/bcparks$BCpop*1000
 #import park coordinate data
 park_coordinates <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/park_coordinates.csv")
 #add latitude and longitude as columns
-bcparks <- merge(bcparks,park_coordinates, by=c("park"))
+bcparks <- merge(bcparks,park_coordinates, by=c("park", "region"))
 
 
 #ADD NEW COLUMNS: AVG MONTHLY TEMPERATURES/DAILY PRECIPITATION NEAR PARK
@@ -66,3 +65,6 @@ bcparks$park <- as.factor(bcparks$park)
 
 #Clean up environment
 rm(camping,dayuse,park_coordinates,population_records,historicaldata)
+
+#Save data as rds
+saveRDS(bcparks, file = "~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
