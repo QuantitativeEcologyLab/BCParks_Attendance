@@ -21,7 +21,7 @@ FArates <- data.frame(year = seq(2020,2100, 1),
                       scenario = "FA")
 FArates$growthrate <- predict(FIT, newdata = FArates, type = "response")
 FArates$population <- 0
-FArates[1,4] = FArates[1,4] + 5286528 #BC's current population
+FArates[1,4] = FArates[1,4] + 5319324 #BC's current population
 
 for(i in 2:nrow(FArates)){
   FArates[i,4] <- (FArates[i,3]/1000*FArates[i-1,4])+FArates[i-1,4]
@@ -32,7 +32,7 @@ HGrates <- data.frame(year = seq(2020,2100, 1),
                     scenario = "HG")
 HGrates$growthrate <- predict(FIT, newdata = HGrates, type = "response")
 HGrates$population <- 0
-HGrates[1,4] = HGrates[1,4] + 5286528 #BC's current population
+HGrates[1,4] = HGrates[1,4] + 5319324 #BC's current population
 
 for(i in 2:nrow(HGrates)){
   HGrates[i,4] <- (HGrates[i,3]/1000*HGrates[i-1,4])+HGrates[i-1,4]
@@ -43,7 +43,7 @@ LGrates <- data.frame(year = seq(2020,2100, 1),
                       scenario = "LG")
 LGrates$growthrate <- predict(FIT, newdata = LGrates, type = "response")
 LGrates$population <- 0 
-LGrates[1,4] = LGrates[1,4] + 5286528 #BC's current population
+LGrates[1,4] = LGrates[1,4] + 5319324 #BC's current population
 
 for(i in 2:nrow(LGrates)){
   LGrates[i,4] <- (LGrates[i,3]/1000*LGrates[i-1,4])+LGrates[i-1,4]
@@ -54,7 +54,7 @@ M1rates <- data.frame(year = seq(2020,2100, 1),
                       scenario = "M1")
 M1rates$growthrate <- predict(FIT, newdata = M1rates, type = "response")
 M1rates$population <- 0 
-M1rates[1,4] = M1rates[1,4] + 5286528 #BC's current population
+M1rates[1,4] = M1rates[1,4] + 5319324 #BC's current population
 
 for(i in 2:nrow(M1rates)){
   M1rates[i,4] <- (M1rates[i,3]/1000*M1rates[i-1,4])+M1rates[i-1,4]
@@ -65,7 +65,7 @@ M2rates <- data.frame(year = seq(2020,2100, 1),
                       scenario = "M2")
 M2rates$growthrate <- predict(FIT, newdata = M2rates, type = "response")
 M2rates$population <- 0 
-M2rates[1,4] = M2rates[1,4] + 5286528 #BC's current population
+M2rates[1,4] = M2rates[1,4] + 5319324 #BC's current population
 
 for(i in 2:nrow(M2rates)){
   M2rates[i,4] <- (M2rates[i,3]/1000*M2rates[i-1,4])+M2rates[i-1,4]
@@ -76,7 +76,7 @@ M3rates <- data.frame(year = seq(2020,2100, 1),
                       scenario = "M3")
 M3rates$growthrate <- predict(FIT, newdata = M3rates, type = "response")
 M3rates$population <- 0 
-M3rates[1,4] = M3rates[1,4] + 5286528 #BC's current population
+M3rates[1,4] = M3rates[1,4] + 5319324 #BC's current population
 
 for(i in 2:nrow(M3rates)){
   M3rates[i,4] <- (M3rates[i,3]/1000*M3rates[i-1,4])+M3rates[i-1,4]
@@ -87,7 +87,7 @@ M4rates <- data.frame(year = seq(2020,2100, 1),
                       scenario = "M4")
 M4rates$growthrate <- predict(FIT, newdata = M4rates, type = "response")
 M4rates$population <- 0 
-M4rates[1,4] = M4rates[1,4] + 5286528 #BC's current population
+M4rates[1,4] = M4rates[1,4] + 5319324 #BC's current population
 
 for(i in 2:nrow(M4rates)){
   M4rates[i,4] <- (M4rates[i,3]/1000*M4rates[i-1,4])+M4rates[i-1,4]
@@ -98,7 +98,7 @@ M5rates <- data.frame(year = seq(2020,2100, 1),
                       scenario = "M5")
 M5rates$growthrate <- predict(FIT, newdata = M5rates, type = "response")
 M5rates$population <- 0 
-M5rates[1,4] = M5rates[1,4] + 5286528 #BC's current population
+M5rates[1,4] = M5rates[1,4] + 5319324 #BC's current population
 
 for(i in 2:nrow(M5rates)){
   M5rates[i,4] <- (M5rates[i,3]/1000*M5rates[i-1,4])+M5rates[i-1,4]
@@ -109,7 +109,7 @@ SArates <- data.frame(year = seq(2020,2100, 1),
                       scenario = "SA")
 SArates$growthrate <- predict(FIT, newdata = SArates, type = "response")
 SArates$population <- 0 
-SArates[1,4] = SArates[1,4] + 5286528 #BC's current population
+SArates[1,4] = SArates[1,4] + 5319324 #BC's current population
 
 for(i in 2:nrow(SArates)){
   SArates[i,4] <- (SArates[i,3]/1000*SArates[i-1,4])+SArates[i-1,4]
