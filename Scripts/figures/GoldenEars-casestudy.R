@@ -14,15 +14,15 @@ options(scipen = 999)
 
 # Show change in attendance for population growth scenarios, plot all SSP scenarios
 ggplot() + 
-  geom_smooth(data = LGattendance[which(LGattendance$park == "Cypress Park"),], 
+  geom_smooth(data = LGattendance[which(LGattendance$park == "Golden Ears Park"),], 
               aes(x = year, y = predicted_visitors, col = ssp), 
               size=1, se = F) +  # predictions for each ssp
-  geom_smooth(data = bcparks[which(bcparks$park == "Cypress Park"),],
+  geom_smooth(data = bcparks[which(bcparks$park == "Golden Ears Park"),],
               aes(x = year, y = visitortotal),
               col = "black",  size = 1, se = F) + # include historical data
   xlab("Year") +
   ylab("Predicted Visitors") +
-  ggtitle("Attendance under Low Population Growth") +
+  ggtitle("Golden Ears Park Attendance under Low Population Growth") +
   scale_color_brewer(type = 'div', palette = 5, direction = -1, name="Climate Scenario") +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() +
@@ -41,15 +41,15 @@ ggplot() +
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 ggplot() + 
-  geom_smooth(data = HGattendance[which(HGattendance$park == "Cypress Park"),], 
+  geom_smooth(data = HGattendance[which(HGattendance$park == "Golden Ears Park"),], 
               aes(x = year, y = predicted_visitors, col = ssp), 
               size=1, se = F) +  # predictions for each ssp
-  geom_smooth(data = bcparks[which(bcparks$park == "Cypress Park"),],
+  geom_smooth(data = bcparks[which(bcparks$park == "Golden Ears Park"),],
               aes(x = year, y = visitortotal),
               col = "black",  size = 1, se = F) + # include historical data
   xlab("Year") +
   ylab("Predicted Visitors") +
-  ggtitle("Attendance under High Population Growth") +
+  ggtitle("Golden Ears Park Attendance under High Population Growth") +
   scale_color_brewer(type = 'div', palette = 5, direction = -1, name="Climate Scenario") +
   scale_y_continuous(labels = scales::comma) +
   theme_bw() +
@@ -75,15 +75,15 @@ ggplot() +
     `2-4.5` = "SSP 2-4.5",
     `3-7.0` = "SSP 3-7.0",
     `5-8.5` = "SSP 5-8.5"))) +
-  geom_smooth(data = LGattendance[which(LGattendance$park == "Cypress Park"),], 
+  geom_smooth(data = LGattendance[which(LGattendance$park == "Golden Ears Park"),], 
               aes(x = month, y = predicted_attendance, group = year, col = year), 
-              size=0.1, se = F) + # lines for each year
-  geom_smooth(data = bcparks[which(bcparks$park == "Cypress Park"),],
+              size=0.1, span = 0.6, se = F) + # lines for each year
+  geom_smooth(data = bcparks[which(bcparks$park == "Golden Ears Park"),],
               aes(x = month, y = attendance),
-              col = "black", size = 1, span = 1,se = F) + # for historical attendance
+              col = "black", size = 1, span = 0.6, se = F) + # for historical attendance
   xlab("Month") +
-  ylab("Predicted Visitors") +
-  ggtitle("Cypress Park Attendance under Low Population Growth") +
+  ylab("Predicted Visitors (per 1000 people)") +
+  ggtitle("Golden Ears Park Attendance under Low Population Growth") +
   scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
   scale_colour_viridis_c(name = "Year") +
   theme_bw() +
@@ -94,12 +94,11 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans", angle = 45, hjust = 1),
         plot.title = element_text(hjust = -0.05, size = 15, family = "sans", face = "bold"),
-        legend.position = "left",
+        legend.position = "right",
         legend.title = element_text(size = 12, family = "sans"),
         legend.box.background = element_rect(color = "black"),
         legend.margin=margin(c(8,8,8,8)),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
-
 

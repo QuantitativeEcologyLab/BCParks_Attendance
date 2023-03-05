@@ -31,21 +31,20 @@ ggplot() +
   scale_color_manual(name="Region", 
                      values=alpha(c('ok'="#C5ABE7",
                                     'north'="#47007A",
-                                    'tc'="#1f78b4",
+                                    'tc'="#85D4FF",
                                     'west'="#34A02C",
-                                    'south'="#85D4FF"), 0.6),
+                                    'south'="#1f78b4"), 0.6),
                      labels=c('Northern', 
                               'Kootenay-Okanagan', 
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +
-  theme(legend.title = element_text(size = 12, face = "bold"),
+  theme(legend.title = element_text(size = 10, face = "bold"),
         legend.text = element_text(size = 10),
         legend.position = "bottom",
         legend.justification = "center",
-        legend.direction = "horizontal",
+        legend.direction = "vertical",
         legend.box.background = element_rect(color = "black"),
-        legend.margin=margin(c(5,8,5,8)),
         plot.title = element_text(hjust = 0.03, size = 30, family = "sans", face = "bold")) +
   coord_sf() # ensures points don't get jittered around when figure dimensions change
 

@@ -17,17 +17,17 @@ seasonal <-
   scale_y_continuous(limits = c(0, 15)) +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +  
+                              'south'="#1f78b4")) +  
   xlab("Month") +
   ylab("Visitors (per 1000 people)") +
   ggtitle("B") +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
-        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.y = element_text(size=10, family = "sans"),
+        axis.title.x = element_text(size=10, family = "sans"),
         axis.text.y = element_text(size=7, family = "sans"),
         axis.text.x  = element_text(size=7, family = "sans"),
         axis.ticks.x = element_blank(),
@@ -49,9 +49,9 @@ ggplot() +
   ggtitle("Attendance in January") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -75,9 +75,9 @@ ggplot() +
   ggtitle("Attendance in February") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -101,9 +101,9 @@ ggplot() +
   ggtitle("Attendance in March") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -127,9 +127,9 @@ ggplot() +
   ggtitle("Attendance in April") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -153,9 +153,9 @@ ggplot() +
   ggtitle("Attendance in May") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -180,9 +180,9 @@ ggplot() +
   ggtitle("Attendance in June") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -206,9 +206,9 @@ ggplot() +
   ggtitle("Attendance in July") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -230,19 +230,21 @@ ggplot() +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("C") +
+  labs(subtitle = "August Attendance") +
   scale_y_continuous(limits = c(0,7)) +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
-        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.y = element_text(size=10, family = "sans"),
+        axis.title.x = element_text(size=10, family = "sans"),
         axis.text.y = element_text(size=7, family = "sans"),
         axis.text.x  = element_text(size=7, family = "sans"),
+        plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
         plot.title = element_text(size = 25, family = "sans", face = "bold"),
         legend.position = "none",
         panel.background = element_rect(fill = "transparent"),
@@ -259,9 +261,9 @@ ggplot() +
   ggtitle("Attendance in September") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -285,9 +287,9 @@ ggplot() +
   ggtitle("Attendance in October") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -311,9 +313,9 @@ ggplot() +
   ggtitle("Attendance in November") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -327,19 +329,47 @@ ggplot() +
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 
-december <- 
-ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "12"),], aes(y = avgprecip, x = avgtemp, col = region),
-             size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance),
-             alpha = 0.2) +
+december <-
+ggplot(data = bcparks[which(bcparks$month == "12"),], 
+       aes(y = avgprecip, x = avgtemp, 
+           size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance), 
+           col = region)) +
+  geom_point(alpha = 0.075) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("D") +
+  labs(subtitle = "December Attendance") +
   scale_color_manual(values=c('ok'="#C5ABE7",
                               'north'="#47007A",
-                              'tc'="#1f78b4",
+                              'tc'="#85D4FF",
                               'west'="#34A02C",
-                              'south'="#85D4FF")) +
+                              'south'="#1f78b4")) +  
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=10, family = "sans"),
+        axis.title.x = element_text(size=10, family = "sans"),
+        axis.text.y = element_text(size=7, family = "sans"),
+        axis.text.x  = element_text(size=7, family = "sans"),
+        plot.title = element_text(size = 25, family = "sans", face = "bold"),
+        plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
+        legend.position = "none",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+
+# make a plot combining august/december observations to get a common legend 
+plot <-   
+ggplot() +
+  geom_point(data = bcparks[which(bcparks$month == "8"),], 
+             aes(y = avgprecip, x = avgtemp, 
+                 size = sqrt(bcparks[which(bcparks$month == "8"),]$attendance)),
+             alpha = 0.2) +
+  geom_point(data = bcparks[which(bcparks$month == "12"),], 
+             aes(y = avgprecip, x = avgtemp, 
+                 size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance)),
+             alpha = 0.2) +
+  labs(size='Visitors \n(per 1000 people)') +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -348,38 +378,20 @@ ggplot() +
         axis.text.y = element_text(size=7, family = "sans"),
         axis.text.x  = element_text(size=7, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 25, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.title = element_text(size = 10, face = "bold"),
+        legend.text = element_text(size = 10),
+        legend.box.background = element_rect(color = "black"),
+        legend.position = "right",
+        legend.direction = "vertical",
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 
-
-# create Figure 1
-# source in map of parks 
-source("~/Desktop/bio/440/BCParks_Attendance/Scripts/figures/map-bcparks.R")
-# make function to grab legend from map figure
-get_legend<-function(myggplot){
-  tmp <- ggplot_gtable(ggplot_build(myggplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)
-}
-# save legend from map
-legend <- get_legend(map)
-# remove legends from map plot
-map <- map + theme(legend.position="none")
-# combine all 4 panels
-FIG1 <- grid.arrange(arrangeGrob(map + theme(legend.position="none"),
-                                 arrangeGrob(seasonal + theme(legend.position="none"),
-                                             august + theme(legend.position="none"),
-                                             december + theme(legend.position="none")),
-                                 ncol=2, widths=c(2,1.3)),
-                     legend, nrow=2,heights=c(10, 1))
 #save all plots
-ggsave(FIG1,
+ggsave(plot,
        width = 8, height = 6, units = "in",
        dpi = 600,
-       bg = "transparent",
+       bg = "white",
        file="~/Desktop/bio/440/BCParks_Attendance/Figures/figure1.png")
 ggsave(seasonal,
        width = 7.21, height = 6.53, units = "in",
@@ -446,3 +458,4 @@ ggsave(december,
        dpi = 600,
        bg = "transparent",
        file="~/Desktop/bio/440/BCParks_Attendance/Figures/historical trends/dec-temp-precip.png")
+
