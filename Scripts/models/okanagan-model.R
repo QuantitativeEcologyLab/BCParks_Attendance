@@ -1,17 +1,19 @@
-setwd("~/Desktop/bio/440/BCParks_Attendance")
 library(lme4)
 library(ggplot2)
 library(dplyr)
 library(mgcv)
 
-ok2019_2022 <- read.csv('Data/bcparks/ok1922NA.csv')
-ok2019_2022 <- na.omit(ok2019_2022)
-ok2019_2022$park <- as.factor(ok2019_2022$park)
-names(ok2019_2022)[names(ok2019_2022) == 'visitorcorrected'] <- 'attendance'
-ok2019_2022$date <- paste(paste(ok2019_2022$year, ok2019_2022$month, sep = "-"), 15, sep = "-")
-ok2019_2022$date <- as.POSIXct(ok2019_2022$date, format = "%Y-%b-%d")
-ok2019_2022$month <- format(ok2019_2022$date, "%m")
-ok2019_2022$month <- as.numeric(ok2019_2022$month)
+# Import the data
+ok2019_2022 <- read.csv('~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/ok1922NA.csv')
+
+# Clean the data
+ok2019_2022 <- na.omit(ok2019_2022) # remove NA values
+ok2019_2022$park <- as.factor(ok2019_2022$park) # change class of variable 'park'
+names(ok2019_2022)[names(ok2019_2022) == 'visitorcorrected'] <- 'attendance' # rename column 
+ok2019_2022$date <- paste(paste(ok2019_2022$year, ok2019_2022$month, sep = "-"), 15, sep = "-") # make a Y-M-D column
+ok2019_2022$date <- as.POSIXct(ok2019_2022$date, format = "%Y-%b-%d") # change class of variable 'date'
+ok2019_2022$month <- format(ok2019_2022$date, "%m") # make a month column by pulling from date column
+ok2019_2022$month <- as.numeric(ok2019_2022$month) # change class of variable 'month'
 ok2019_2022 <- ok2019_2022[-which(ok2019_2022$attendance>120),] #remove outlier from dataset
 
 M_olddata <- gam(attendance ~
