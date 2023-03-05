@@ -2,8 +2,6 @@ library(tidyverse)
 library(dplyr)
 library(mgcv)
 
-# Import the historical data
-bcparks = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
 # Import the model
 M = readRDS("~/Desktop/bio/440/BCParks_Attendance/Scripts/models/model-alldata.rda")
 # Import the climate projection data
@@ -51,19 +49,21 @@ climateLG <- climateLG[order(climateLG$ssp, climateLG$park, climateLG$year, clim
 climateHG <- climateHG[order(climateHG$ssp, climateHG$park, climateHG$year, climateHG$month),]
 
 # Calculate projected visitor COUNTS for each population growth scenario
-climateLG$predicted_visitors <- (climateLG$population/1000)*climateLG$predicted_attendance
-climateHG$predicted_visitors <- (climateHG$population/1000)*climateHG$predicted_attendance
+climateLG$predicted_visitors <- (climateLG$predicted_attendance/1000)*climateLG$population
+climateHG$predicted_visitors <- (climateHG$predicted_attendance/1000)*climateHG$population
 
-# Calculate absolute change in attendance (relative to previous month's observation)
+# Fix formatting for projected visitor counts
+climateLG$predicted_visitors <- as.numeric(climateLG$predicted_visitors)
+climateHG$predicted_visitors <- as.numeric(climateHG$predicted_visitors)
+
+# Calculate relative change in attendance (relative to first prediction)
 climateLG <- climateLG %>%
-  group_by(ssp, park) %>% # don't compare different SSPs or parks
-  mutate(diff = predicted_visitors - lag(predicted_visitors))
+  group_by(ssp, park) %>% # don't compare different SSPs or parks to each other
+  mutate(relative_visitors = predicted_visitors/first(predicted_visitors))
+
 climateHG <- climateHG %>%
-  group_by(ssp, park) %>% # don't compare different SSPs or parks
-  mutate(diff = predicted_visitors - lag(predicted_visitors))
-# Calculate relative (percent) change in attendance
-climateLG$relative_visitors <- climateLG$diff/lag(climateLG$predicted_visitors)
-climateHG$relative_visitors <- climateHG$diff/lag(climateHG$predicted_visitors)*100
+  group_by(ssp, park) %>% # don't compare different SSPs or parks to each other
+  mutate(relative_visitors = predicted_visitors/first(predicted_visitors))
 
 
 # Save projections as RDS
@@ -71,4 +71,4 @@ saveRDS(climateLG, file = "~/Desktop/bio/440/BCParks_Attendance/Data/projections
 saveRDS(climateHG, file = "~/Desktop/bio/440/BCParks_Attendance/Data/projections/HG-attendance-projections.rds")
 
 # Clean up environment
-rm(LGrates,HGrates,coords,M,bcparks)
+rm(LGrates,HGrates,coords,M,climate)
