@@ -46,9 +46,3 @@ ggplot() +
         plot.title = element_text(size = 30, family = "sans", face = "bold")) +
   coord_sf() # ensures points don't get jittered around when figure dimensions change
 
-# save the figure
-ggsave(map,
-       width = 8.21, height = 5.53, units = "in",
-       dpi = 600,
-       bg = "transparent",
-       file="~/Desktop/bio/440/BCParks_Attendance/Figures/BCParks-distribution-map.png")
