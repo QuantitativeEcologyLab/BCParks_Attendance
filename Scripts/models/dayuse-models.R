@@ -48,6 +48,6 @@ M_alldata <- gam(attendance ~
                  knots = list(month = c(0.5, 12.5)))
 
 # Save the model
-saveRDS(M_alldata, file = "~/Desktop/bio/440/BCParks_Attendance/Scripts/models/model-alldata.rda")
+saveRDS(M_alldata, file = "~/Desktop/bio/440/BCParks_Attendance/Scripts/models/model.rda")
 
 

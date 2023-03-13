@@ -34,41 +34,30 @@ climate$predicted_attendance <- predict(M, newdata = climate, type = "response")
 # Remove parks for which there was no historical attendance data (therefore no projections)
 climate <- na.omit(climate)
 
-
 # Make datasets for different population growth scenarios: low growth (LG) and high growth (HG)
-climateLG <- merge(climate,LGrates,by=c("year"))
-climateHG <- merge(climate,HGrates,by=c("year"))
+LGattendance <- merge(climate,LGrates,by=c("year"))
+HGattendance <- merge(climate,HGrates,by=c("year"))
 
 # Reorganize column orders
-climateLG <- climateLG %>% relocate(c(park, year, month, region, avgtemp, avgprecip, 
+LGattendance <- LGattendance %>% relocate(c(park, year, month, region, avgtemp, avgprecip, 
                        predicted_attendance, latitude, longitude, elevation), .after = ssp)
-climateHG <- climateHG %>% relocate(c(park, year, month, region, avgtemp, avgprecip, 
+HGattendance <- HGattendance %>% relocate(c(park, year, month, region, avgtemp, avgprecip, 
                                   predicted_attendance, latitude, longitude, elevation), .after = ssp)
 # Make the SSP, year, month columns ascending & alphabetize the park column
-climateLG <- climateLG[order(climateLG$ssp, climateLG$park, climateLG$year, climateLG$month),]
-climateHG <- climateHG[order(climateHG$ssp, climateHG$park, climateHG$year, climateHG$month),]
+LGattendance <- LGattendance[order(LGattendance$ssp, LGattendance$park, LGattendance$year, LGattendance$month),]
+HGattendance <- HGattendance[order(HGattendance$ssp, HGattendance$park, HGattendance$year, HGattendance$month),]
 
 # Calculate projected visitor COUNTS for each population growth scenario
-climateLG$predicted_visitors <- (climateLG$predicted_attendance/1000)*climateLG$population
-climateHG$predicted_visitors <- (climateHG$predicted_attendance/1000)*climateHG$population
+LGattendance$predicted_visitors <- (LGattendance$predicted_attendance/1000)*LGattendance$population
+HGattendance$predicted_visitors <- (HGattendance$predicted_attendance/1000)*HGattendance$population
 
 # Fix formatting for projected visitor counts
-climateLG$predicted_visitors <- as.numeric(climateLG$predicted_visitors)
-climateHG$predicted_visitors <- as.numeric(climateHG$predicted_visitors)
-
-# Calculate relative change in attendance (relative to first prediction)
-climateLG <- climateLG %>%
-  group_by(ssp, park) %>% # don't compare different SSPs or parks to each other
-  mutate(relative_visitors = predicted_visitors/first(predicted_visitors))
-
-climateHG <- climateHG %>%
-  group_by(ssp, park) %>% # don't compare different SSPs or parks to each other
-  mutate(relative_visitors = predicted_visitors/first(predicted_visitors))
-
-
+LGattendance$predicted_visitors <- as.numeric(LGattendance$predicted_visitors)
+HGattendance$predicted_visitors <- as.numeric(HGattendance$predicted_visitors)
+ 
 # Save projections as RDS
-saveRDS(climateLG, file = "~/Desktop/bio/440/BCParks_Attendance/Data/projections/LG-attendance-projections.rds")
-saveRDS(climateHG, file = "~/Desktop/bio/440/BCParks_Attendance/Data/projections/HG-attendance-projections.rds")
+saveRDS(LGattendance, file = "~/Desktop/bio/440/BCParks_Attendance/Data/projections/LG-attendance-projections.rds")
+saveRDS(HGattendance, file = "~/Desktop/bio/440/BCParks_Attendance/Data/projections/HG-attendance-projections.rds")
 
 # Clean up environment
 rm(LGrates,HGrates,coords,M,climate)
