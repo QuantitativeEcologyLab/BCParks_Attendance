@@ -1,3 +1,5 @@
+library(gridExtra)
+
 # source in map of parks 
 source("~/Desktop/bio/440/BCParks_Attendance/Scripts/figures/map-bcparks.R")
 # source in historical trend plots 
@@ -15,17 +17,21 @@ regionlegend <- get_legend(map)
 sizelegend <- get_legend(plot)
 # remove legends from map plot
 map <- map + theme(legend.position="none")
+
 # combine all 4 panels
-FIG1 <- grid.arrange(arrangeGrob(arrangeGrob(map, arrangeGrob(regionlegend, sizelegend, 
-                                             ncol = 2), heights = c(10,1)), # left half 
-                                 arrangeGrob(seasonal, august, december, 
-                                             ncol = 1, heights = c(10,10,10)), # right half
-                                 ncol=2, widths=c(2,1.3)),
-                     nrow=2,heights=c(10, 1))
+fig <- grid.arrange(arrangeGrob(map, seasonal,
+                                ncol = 1,
+                                heights = c(10,6)), # left half
+                    arrangeGrob(august, december, sizelegend,
+                                ncol = 1,
+                                heights = c(10,10,5)), # right half
+                    ncol=2, widths = c(8, 6))
+FIG1 <- grid.arrange(regionlegend, fig,
+                     nrow = 2, heights = c(1,20))
 
 #save all plots
 ggsave(FIG1,
-       width = 8, height = 6, units = "in",
+       width = 10, height = 8, units = "in",
        dpi = 600,
        bg = "white",
        file="~/Desktop/bio/440/BCParks_Attendance/Figures/figure1.png")

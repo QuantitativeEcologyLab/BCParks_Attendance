@@ -9,17 +9,18 @@ seasonal <-
   ggplot() +
   geom_jitter(data = bcparks[which(bcparks$attendancetype == "dayuse"),],
              aes(y = attendance, x = month, col = region),
-             alpha = 0.05, size = 0.5, width = 0.25) +
+             alpha = 0.05, size = 1, width = 0.25, shape = 2) +
   geom_smooth(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
               aes(y = attendance, x = month, col = region),
               size = 0.6, se = F) +
   scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
   scale_y_continuous(limits = c(0, 15)) +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                      labels=c('Northern', 
+                               'Kootenay-Okanagan', 
+                               'South Coast', 
+                               'Thompson-Cariboo', 
+                               'West Coast')) +
   xlab("Month") +
   ylab("Visitors (per 1000 people)") +
   ggtitle("B") +
@@ -31,7 +32,7 @@ seasonal <-
         axis.text.y = element_text(size=7, family = "sans"),
         axis.text.x  = element_text(size=7, family = "sans"),
         axis.ticks.x = element_blank(),
-        plot.title = element_text(hjust = -0.03, size = 25, family = "sans", face = "bold"),
+        plot.title = element_text(size = 25, family = "sans", face = "bold"),
         legend.position = "none",
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
@@ -39,19 +40,22 @@ seasonal <-
 
 # Attendance in relation to temperature & precipitation: to see effect of weather in each month
 
-january <- 
+january <-
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "1"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "1"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "1"),]$attendance),
-             alpha = 0.5) +
+             # alpha = 0.5, 
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in January") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) + 
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -67,17 +71,20 @@ ggplot() +
 
 february <- 
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "2"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "2"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "2"),]$attendance),
-             alpha = 0.5) +
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in February") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -93,17 +100,20 @@ ggplot() +
 
 march <- 
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "3"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "3"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "3"),]$attendance),
-             alpha = 0.5) +
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in March") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) + 
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -117,19 +127,22 @@ ggplot() +
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 
-april <- 
+april <-
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "4"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "4"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "4"),]$attendance),
-             alpha = 0.5) +
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in April") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -145,17 +158,20 @@ ggplot() +
 
 may <- 
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "5"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "5"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = log(bcparks[which(bcparks$month == "5"),]$attendance),
-             alpha = 0.5) +
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in May") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -171,18 +187,21 @@ ggplot() +
 
 june <- 
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "6"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "6"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "6"),]$attendance),
-             alpha = 0.3) +
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   scale_y_continuous(limits = c(0,10)) +
   ggtitle("Attendance in June") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -198,17 +217,20 @@ ggplot() +
 
 july <- 
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "7"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "7"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "7"),]$attendance),
-             alpha = 0.2) +
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in July") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -222,21 +244,24 @@ ggplot() +
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 
-august <- 
+august <-
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "8"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "8"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "8"),]$attendance),
-             alpha = 0.075) +
+             alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("C") +
   labs(subtitle = "August Attendance") +
   scale_y_continuous(limits = c(0,7)) +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -253,17 +278,20 @@ ggplot() +
 
 september <- 
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "9"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "9"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "9"),]$attendance),
-             alpha = 0.3) +
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in September") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -279,17 +307,20 @@ ggplot() +
 
 october <- 
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "10"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "10"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "10"),]$attendance),
-             alpha = 0.5) +
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in October") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -305,17 +336,20 @@ ggplot() +
 
 november <- 
 ggplot() +
-  geom_point(data = bcparks[which(bcparks$month == "11"),], aes(y = avgprecip, x = avgtemp, col = region),
+  geom_point(data = bcparks[which(bcparks$month == "11"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "11"),]$attendance),
-             alpha = 0.5) +
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in November") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -330,20 +364,22 @@ ggplot() +
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 
 december <-
-ggplot(data = bcparks[which(bcparks$month == "12"),], 
-       aes(y = avgprecip, x = avgtemp, 
-           size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance), 
-           col = region)) +
-  geom_point(alpha = 0.075) +
+ggplot() +
+  geom_point(data = bcparks[which(bcparks$month == "12"),], 
+             aes(y = avgprecip, x = avgtemp, col = region),
+             size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance),
+             # alpha = 0.5,
+             shape = 1) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("D") +
   labs(subtitle = "December Attendance") +
-  scale_color_manual(values=c('ok'="#C5ABE7",
-                              'north'="#47007A",
-                              'tc'="#85D4FF",
-                              'west'="#34A02C",
-                              'south'="#1f78b4")) +  
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -351,24 +387,26 @@ ggplot(data = bcparks[which(bcparks$month == "12"),],
         axis.title.x = element_text(size=10, family = "sans"),
         axis.text.y = element_text(size=7, family = "sans"),
         axis.text.x  = element_text(size=7, family = "sans"),
-        plot.title = element_text(size = 25, family = "sans", face = "bold"),
         plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
+        plot.title = element_text(size = 25, family = "sans", face = "bold"),
         legend.position = "none",
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 
 # make a plot combining august/december observations to get a common legend 
-plot <-   
+plot <-
 ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "8"),], 
              aes(y = avgprecip, x = avgtemp, 
                  size = sqrt(bcparks[which(bcparks$month == "8"),]$attendance)),
-             alpha = 0.2) +
+             # alpha = 0.2,
+             shape = 1) +
   geom_point(data = bcparks[which(bcparks$month == "12"),], 
              aes(y = avgprecip, x = avgtemp, 
                  size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance)),
-             alpha = 0.2) +
+             # alpha = 0.2,
+             shape = 1) +
   labs(size='Visitors \n(per 1000 people)') +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
