@@ -3,7 +3,7 @@ library(dplyr)
 library(mgcv)
 
 # Import the model
-M = readRDS("~/Desktop/bio/440/BCParks_Attendance/Scripts/models/model-alldata.rda")
+M = readRDS("~/Desktop/bio/440/BCParks_Attendance/Scripts/models/model.rda")
 # Import the climate projection data
 climate = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/climate-projections/monthly-climate-projections.rds")
 # Import park coordinates
@@ -23,8 +23,8 @@ climate$scenario <- recode_factor(climate$scenario,
 climate <- climate %>% 
   rename(
     avgtemp = temperature,
-    avgprecip = tot_precip,
     ssp = scenario)
+
 # Model requires park column, so annotate coordinates with park names
 climate <- merge(x=climate,y=coords, 
                  by=c("latitude","longitude"), all.x=TRUE)

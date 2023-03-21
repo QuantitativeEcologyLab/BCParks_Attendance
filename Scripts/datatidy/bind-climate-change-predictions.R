@@ -40,8 +40,13 @@ d <-
                              \(.chr) substr(.chr, 1, nchar(.chr) - 2))) %>%
   # pivot wider to make separate columns of temperature and precipitation
   pivot_wider(names_from = parameter, values_from = value) %>%
-  # convert to meters from millimeters
-  mutate(PPT = PPT / 1e3) %>%
+  # convert monthly total precip to average daily precip
+  mutate(first_day = as.Date(paste(year, month, '01', sep = '-')),
+         next_month = if_else(month != '12', as.numeric(month + 1), 1),
+         next_year = if_else(month != '12', year, year + 1),
+         last_day = as.Date(paste(next_year, next_month, '01', sep = '-')),
+         samples = as.numeric((last_day - first_day)),
+         avgprecip = PPT / samples) %>% # convert to millimeters per day
   # change to names used in the models
   rename(temperature = Tave,
          tot_precip = PPT,

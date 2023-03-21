@@ -35,8 +35,7 @@ historicaldata <-
          next_year = if_else(month != '12', year, year + 1),
          last_day = as.Date(paste(next_year, next_month, '01', sep = '-')),
          samples = as.numeric((last_day - first_day)),
-         avgprecip = PPT / samples,
-         avgprecip = avgprecip / 1e3) %>% # convert to meters from millimeters
+         avgprecip = PPT / samples) %>% # convert to millimeters per day
   # drop temporary columns
   select(-c(first_day, next_month, next_year, last_day, samples, PPT)) %>%
   # change to names used in the models

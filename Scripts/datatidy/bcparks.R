@@ -56,8 +56,6 @@ bcparks <- merge(bcparks,park_coordinates, by=c("park", "region"))
 #ADD NEW COLUMNS: AVG MONTHLY TEMPERATURES/DAILY PRECIPITATION NEAR PARK
 #Get rid of unnecessary columns in historical climate dataset
 historicaldata = select(historicaldata, -c(dec_date, elevation))
-#Change avgprecip from meters to mm
-historicaldata$avgprecip <- historicaldata$avgprecip*1000
 #Merge the datasets
 bcparks <- merge(x=bcparks,y=historicaldata, 
              by=c("latitude","longitude", "year", "month"), all.x=TRUE)
