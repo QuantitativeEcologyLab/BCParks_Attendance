@@ -9,6 +9,8 @@ historicaldata = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/historical-c
 setwd("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks")
 camping <- read.csv("camping.csv", na = "0", check.names = FALSE)
 dayuse <- read.csv("dayuse.csv", na = "0", check.names = FALSE)
+
+# CLEAN ATTENDANCE DATA
 #Convert from wide to long format
 camping <- gather(camping, date, visitortotal, "2010-01-01":"2019-12-01", factor_key = TRUE)
 dayuse <- gather(dayuse, date, visitortotal, "2010-01-01":"2019-12-01", factor_key = TRUE)
