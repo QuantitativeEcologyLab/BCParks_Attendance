@@ -17,14 +17,17 @@ regionlegend <- get_legend(map)
 sizelegend <- get_legend(plot)
 # remove legends from map plot
 map <- map + theme(legend.position="none")
+august <- august + theme(legend.position="none")
+december <- december + theme(legend.position="none")
+seasonal <- seasonal + theme(legend.position="none")
 
 # combine all 4 panels
 fig <- grid.arrange(arrangeGrob(map, seasonal,
                                 ncol = 1,
-                                heights = c(10,6)), # left half
+                                heights = c(8,6)), # left half
                     arrangeGrob(august, december, sizelegend,
                                 ncol = 1,
-                                heights = c(10,10,5)), # right half
+                                heights = c(8,8,3)), # right half
                     ncol=2, widths = c(8, 6))
 FIG1 <- grid.arrange(regionlegend, fig,
                      nrow = 2, heights = c(1,20))

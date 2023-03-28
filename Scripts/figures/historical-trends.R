@@ -1,5 +1,6 @@
 library(ggplot2)
 library(gridExtra)
+library(khroma)
 
 # Import the historical data
 bcparks = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
@@ -8,45 +9,46 @@ bcparks = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds
 seasonal <-
   ggplot() +
   geom_jitter(data = bcparks[which(bcparks$attendancetype == "dayuse"),],
-             aes(y = attendance, x = month, col = region),
-             alpha = 0.05, size = 1, width = 0.25, shape = 2) +
+              aes(y = attendance, x = month, col = region),
+              alpha = 0.05, size = 1, width = 0.25,shape = 17) +
   geom_smooth(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
               aes(y = attendance, x = month, col = region),
               size = 0.6, se = F) +
   scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
   scale_y_continuous(limits = c(0, 15)) +
   scale_colour_muted(name="Region",
-                      labels=c('Northern', 
-                               'Kootenay-Okanagan', 
-                               'South Coast', 
-                               'Thompson-Cariboo', 
-                               'West Coast')) +
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +
   xlab("Month") +
   ylab("Visitors (per 1000 people)") +
   ggtitle("B") +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=10, family = "sans"),
-        axis.title.x = element_text(size=10, family = "sans"),
+        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
         axis.text.y = element_text(size=7, family = "sans"),
         axis.text.x  = element_text(size=7, family = "sans"),
         axis.ticks.x = element_blank(),
-        plot.title = element_text(size = 25, family = "sans", face = "bold"),
-        legend.position = "none",
+        plot.title = element_text(size = 25, family = "sans", face = "bold",
+                                  vjust = -5.5, hjust = 0.02),
+        legend.position = "bottom",
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 # Attendance in relation to temperature & precipitation: to see effect of weather in each month
 
 january <-
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "1"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "1"),]$attendance),
-             # alpha = 0.5, 
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in January") +
@@ -56,6 +58,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) + 
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -64,18 +70,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 february <- 
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "2"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "2"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in February") +
@@ -85,6 +93,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -93,18 +105,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 march <- 
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "3"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "3"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in March") +
@@ -114,6 +128,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) + 
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -122,18 +140,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 april <-
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "4"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "4"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in April") +
@@ -143,6 +163,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -151,18 +175,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 may <- 
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "5"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = log(bcparks[which(bcparks$month == "5"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in May") +
@@ -172,6 +198,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -180,18 +210,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 june <- 
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "6"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "6"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   scale_y_continuous(limits = c(0,10)) +
@@ -202,6 +234,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -210,18 +246,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 july <- 
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "7"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "7"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in July") +
@@ -231,6 +269,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -239,18 +281,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 august <-
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "8"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "8"),]$attendance),
              alpha = 0.5,
-             shape = 1) +
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("C") +
@@ -262,27 +306,34 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=10, family = "sans"),
-        axis.title.x = element_text(size=10, family = "sans"),
+        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
         axis.text.y = element_text(size=7, family = "sans"),
         axis.text.x  = element_text(size=7, family = "sans"),
         plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
-        plot.title = element_text(size = 25, family = "sans", face = "bold"),
-        legend.position = "none",
+        plot.title = element_text(size = 25, family = "sans", face = "bold",
+                                  vjust = -8, hjust = 0.02),
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 september <- 
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "9"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "9"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in September") +
@@ -292,6 +343,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -300,18 +355,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 october <- 
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "10"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "10"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in October") +
@@ -321,6 +378,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -329,18 +390,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 november <- 
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "11"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "11"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("Attendance in November") +
@@ -350,6 +413,10 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -358,18 +425,20 @@ ggplot() +
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
         plot.title = element_text(hjust = -0.05, size = 16, family = "sans", face = "bold"),
-        legend.position = "none",
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 december <-
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "12"),], 
              aes(y = avgprecip, x = avgtemp, col = region),
              size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance),
-             # alpha = 0.5,
-             shape = 1) +
+             alpha = 0.5,
+             shape = 16) +
   xlab("Temperature (ºC)") +
   ylab("Precipitation (mm)") +
   ggtitle("D") +
@@ -380,34 +449,49 @@ ggplot() +
                               'South Coast', 
                               'Thompson-Cariboo', 
                               'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.title.y = element_text(size=10, family = "sans"),
-        axis.title.x = element_text(size=10, family = "sans"),
+        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
         axis.text.y = element_text(size=7, family = "sans"),
         axis.text.x  = element_text(size=7, family = "sans"),
         plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
-        plot.title = element_text(size = 25, family = "sans", face = "bold"),
-        legend.position = "none",
+        plot.title = element_text(size = 25, family = "sans", face = "bold",
+                                  vjust = -8, hjust = 0.02),
+        legend.position = "bottom",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 # make a plot combining august/december observations to get a common legend 
 plot <-
-ggplot() +
+  ggplot() +
   geom_point(data = bcparks[which(bcparks$month == "8"),], 
              aes(y = avgprecip, x = avgtemp, 
                  size = sqrt(bcparks[which(bcparks$month == "8"),]$attendance)),
              # alpha = 0.2,
-             shape = 1) +
+             shape = 16) +
   geom_point(data = bcparks[which(bcparks$month == "12"),], 
              aes(y = avgprecip, x = avgtemp, 
                  size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance)),
              # alpha = 0.2,
-             shape = 1) +
-  labs(size='Visitors \n(per 1000 people)') +
+             shape = 16) +
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10),
+                        labels = c("2" = "4", 
+                                   "4" = "16", 
+                                   "6" = "36",
+                                   "8" = "64",
+                                   "10" = "100")) + #change labels, since point size is sqrt transformed
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -420,17 +504,12 @@ ggplot() +
         legend.text = element_text(size = 10),
         legend.box.background = element_rect(color = "black"),
         legend.position = "right",
-        legend.direction = "vertical",
+        legend.direction = "horizontal",
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
-        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
 
 #save all plots
-ggsave(plot,
-       width = 8, height = 6, units = "in",
-       dpi = 600,
-       bg = "white",
-       file="~/Desktop/bio/440/BCParks_Attendance/Figures/figure1.png")
 ggsave(seasonal,
        width = 7.21, height = 6.53, units = "in",
        dpi = 600,

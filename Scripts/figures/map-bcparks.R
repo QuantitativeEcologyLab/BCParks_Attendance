@@ -43,6 +43,8 @@ ggplot() +
         legend.justification = "center",
         legend.direction = "horizontal",
         legend.box.background = element_rect(color = "black"),
-        plot.title = element_text(size = 30, family = "sans", face = "bold")) +
+        plot.margin = unit(c(-1,0,-1,0), "cm"),
+        plot.title = element_text(vjust = -8.5, hjust = 0.03,
+                                  size = 30, family = "sans", face = "bold")) +
   coord_sf() # ensures points don't get jittered around when figure dimensions change
 

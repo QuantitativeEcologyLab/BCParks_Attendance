@@ -1,4 +1,5 @@
 library(ggplot2)
+library(gridExtra)
 library(ggh4x) # to fill in facet wrap title boxes
 
 # Import the historical data
@@ -26,15 +27,17 @@ LG <-
     `5-8.5` = "SSP 5-8.5"))) +
   geom_smooth(data = LGattendance[which(LGattendance$park == "Golden Ears Park"),], 
               aes(x = month, y = predicted_visitors, group = year, col = year), 
+              method = 'gam', formula = y ~ s(x), method.args = list(family = Gamma('log')),
               size=0.1, span = 0.6, se = F) + # lines for each year
   geom_smooth(data = bcparks[which(bcparks$park == "Golden Ears Park"),],
               aes(x = month, y = visitortotal),
+              method = 'gam', formula = y ~ s(x), method.args = list(family = Gamma('log')),
               col = "black", size = 1, span = 0.6, se = F) + # for historical attendance
   xlab("Month") +
-  ylab("Predicted Visitors") +
+  ylab("Monthly Visitors") +
   ggtitle("A") +
   labs(subtitle = "Golden Ears Park Attendance under Low Population Growth") +
-  scale_y_continuous(labels = scales::comma, limits = c(0,500000)) +
+  scale_y_continuous(labels = scales::comma, limits = c(0,375000)) +
   scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
   scale_colour_viridis_c(name = "Year") +
   theme_bw() +
@@ -67,15 +70,17 @@ HG <-
     `5-8.5` = "SSP 5-8.5"))) +
   geom_smooth(data = HGattendance[which(HGattendance$park == "Golden Ears Park"),], 
               aes(x = month, y = predicted_visitors, group = year, col = year), 
+              method = 'gam', formula = y ~ s(x), method.args = list(family = Gamma('log')),
               size=0.1, span = 0.6, se = F) + # lines for each year
   geom_smooth(data = bcparks[which(bcparks$park == "Golden Ears Park"),],
               aes(x = month, y = visitortotal),
+              method = 'gam', formula = y ~ s(x), method.args = list(family = Gamma('log')),
               col = "black", size = 1, span = 0.6, se = F) + # for historical attendance
   xlab("Month") +
-  ylab("Predicted Visitors") +
+  ylab("Monthly Visitors") +
   ggtitle("B") +
   labs(subtitle = "Golden Ears Park Attendance under High Population Growth") +
-  scale_y_continuous(labels = scales::comma, limits = c(0,500000)) +
+  scale_y_continuous(labels = scales::comma, limits = c(0,375000)) +
   scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
   scale_colour_viridis_c(name = "Year") +
   theme_bw() +
