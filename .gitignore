@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 popproj.rmd
+.Rdata
+.httr-oauth
+.DS_Store
