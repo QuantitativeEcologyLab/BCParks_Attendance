@@ -15,8 +15,8 @@ dayuse <- read.csv("dayuse.csv", na = "0", check.names = FALSE)
 camping <- gather(camping, date, visitortotal, "2010-01-01":"2019-12-01", factor_key = TRUE)
 dayuse <- gather(dayuse, date, visitortotal, "2010-01-01":"2019-12-01", factor_key = TRUE)
 #Remove months with no values (NAs)
-#camping <- na.omit(camping)
-#dayuse <- na.omit(dayuse)
+camping <- na.omit(camping)
+dayuse <- na.omit(dayuse)
 #Classify type of attendance
 camping$attendancetype <- "camping"
 dayuse$attendancetype <- "dayuse"
@@ -27,13 +27,13 @@ bcparks <- rbind(camping,dayuse)
 #ADD NEW COLUMNS: MONTH AND YEAR
 bcparks <- bcparks %>%
   separate(date, sep="-", into = c("year", "month", "day"))
-#remove day column (it's an arbitrary number)
-bcparks = subset(bcparks, select = -c(day))
-#bring back the date column (maybe won't need it?)
+# Bring back the date column
 bcparks$date <- paste(paste(bcparks$year, bcparks$month, sep = "-"), 15, sep = "-")
 bcparks$date <- as.POSIXct(bcparks$date, format = "%Y-%m-%d")
 bcparks$month <- as.numeric(bcparks$month)
 bcparks$park <- as.factor(bcparks$park)
+# Remove day column (it's an arbitrary number)
+bcparks = subset(bcparks, select = -c(day))
 
 #ADD NEW COLUMN: BC POPULATION
 #import historic population data
