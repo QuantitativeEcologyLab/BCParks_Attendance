@@ -2,7 +2,6 @@ library(lme4)
 
 data <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/population/popgrowth.csv")
 data$scenario <- as.factor(data$scenario)
-data$growth2 <- data$growthrate/100
 
 #Fit the model
 FIT <- glmer(growthrate ~ year  + (year|scenario),

@@ -28,5 +28,5 @@ for(y in 2021:2100) {
     exe = 'ClimateNA_v7.31.exe', # exe location (in working directory)
     scen = '8GCM', # 8GCMs_ensemble General Circulation Model
     ssp = c('S1', 'S2', 'S3', 'S5'), # Shared Socioeconomic Pathway scenarios
-    years = as.character(y)) # can only extract data for two decades as a time
+    years = as.character(y))
 }

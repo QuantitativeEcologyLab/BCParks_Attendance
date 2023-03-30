@@ -6,7 +6,7 @@ library(mgcv)
 # Import the historical data
 bcparks = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
 # Import the model
-M = readRDS("~/Desktop/bio/440/BCParks_Attendance/Scripts/models/model-alldata.rda")
+M = readRDS("~/Desktop/bio/440/BCParks_Attendance/Scripts/models/model.rda")
 
 #Build datasets of a couple random parks in each region
 group <- bcparks %>% 

@@ -31,7 +31,7 @@ d <-
   # pivot from wide to long format (only one column of precip and temp)
   pivot_longer(-c(scenario, year, Latitude, Longitude, Elevation),
                names_to = 'parameter', values_to = 'value') %>%
-  # extract month and out of parameters
+  # extract month and year out of parameters
   mutate(month = map_chr(parameter,
                          \(.chr) substr(.chr, nchar(.chr) - 1, nchar(.chr))),
          month = as.numeric(month),
