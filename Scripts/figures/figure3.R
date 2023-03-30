@@ -25,14 +25,14 @@ LG <-
     `2-4.5` = "SSP 2-4.5",
     `3-7.0` = "SSP 3-7.0",
     `5-8.5` = "SSP 5-8.5"))) +
-  geom_smooth(data = LGattendance[which(LGattendance$park == "Golden Ears Park"),], 
-              aes(x = month, y = predicted_visitors, group = year, col = year), 
-              method = 'gam', formula = y ~ s(x), method.args = list(family = Gamma('log')),
-              size=0.1, span = 0.6, se = F) + # lines for each year
-  geom_smooth(data = bcparks[which(bcparks$park == "Golden Ears Park"),],
-              aes(x = month, y = visitortotal),
-              method = 'gam', formula = y ~ s(x), method.args = list(family = Gamma('log')),
-              col = "black", size = 1, span = 0.6, se = F) + # for historical attendance
+  geom_line(data = LGattendance[which(LGattendance$park == PARK),], 
+            aes(month, predicted_visitors, group = year, col = year), 
+            size=0.1) + # lines for each year
+  geom_point(data = bcparks[which(bcparks$park == PARK),] %>%
+               group_by(month) %>%
+               summarise(visitortotal = mean(visitortotal)), 
+             aes(month, visitortotal), 
+             col = "black", size = 1, na.rm = TRUE) + # plot historical monthly averages as points
   xlab("Month") +
   ylab("Monthly Visitors") +
   ggtitle("A") +
@@ -68,14 +68,14 @@ HG <-
     `2-4.5` = "SSP 2-4.5",
     `3-7.0` = "SSP 3-7.0",
     `5-8.5` = "SSP 5-8.5"))) +
-  geom_smooth(data = HGattendance[which(HGattendance$park == "Golden Ears Park"),], 
-              aes(x = month, y = predicted_visitors, group = year, col = year), 
-              method = 'gam', formula = y ~ s(x), method.args = list(family = Gamma('log')),
-              size=0.1, span = 0.6, se = F) + # lines for each year
-  geom_smooth(data = bcparks[which(bcparks$park == "Golden Ears Park"),],
-              aes(x = month, y = visitortotal),
-              method = 'gam', formula = y ~ s(x), method.args = list(family = Gamma('log')),
-              col = "black", size = 1, span = 0.6, se = F) + # for historical attendance
+  geom_line(data = HGattendance[which(HGattendance$park == "Golden Ears Park"),], 
+            aes(month, predicted_visitors, group = year, col = year), 
+            size=0.1) + # lines for each year
+  geom_point(data = bcparks[which(bcparks$park == "Golden Ears Park"),] %>%
+               group_by(month) %>%
+               summarise(visitortotal = mean(visitortotal)), 
+             aes(month, visitortotal), 
+             col = "black", size = 1, na.rm = TRUE) + # plot historical monthly averages as points
   xlab("Month") +
   ylab("Monthly Visitors") +
   ggtitle("B") +

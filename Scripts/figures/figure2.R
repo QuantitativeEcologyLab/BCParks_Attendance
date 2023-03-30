@@ -7,24 +7,21 @@ library(ggh4x) # to fill in facet wrap title boxes
 LGattendance = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/projections/LG-attendance-projections.rds")
 HGattendance = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/projections/HG-attendance-projections.rds")
 
-# Make a date column
-LGattendance$date <- paste(paste(LGattendance$year, LGattendance$month, sep = "-"), 15, sep = "-")
-LGattendance$date <- as.POSIXct(LGattendance$date, format = "%Y-%m-%d")
-HGattendance$date <- paste(paste(HGattendance$year, HGattendance$month, sep = "-"), 15, sep = "-")
-HGattendance$date <- as.POSIXct(HGattendance$date, format = "%Y-%m-%d")
-
-# Calculate relative change in attendance (relative to first prediction)
+# Calculate change in attendance relative to first prediction
 LGattendance <- LGattendance %>%
-  group_by(ssp, year, park) %>% # don't compare different SSPs or parks to each other
-  mutate(predicted_attendance = sum(predicted_attendance))
-LGattendance <- group_by(LGattendance, park, ssp) %>%
-  mutate(relative_visitors = predicted_attendance / first(predicted_attendance))
-# Calculate relative change in attendance (relative to first prediction)
+  group_by(ssp, year, park) %>% # don't compare different SSPs, years, or parks to each other
+  mutate(annual_visitors = sum(predicted_visitors)) # get annual totals
+LGattendance <- LGattendance %>%
+  group_by(park, ssp) %>% # don't compare different SSPs or parks to each other
+  mutate(relative_visitors = annual_visitors / first(annual_visitors)) 
+
+# Calculate change in attendance relative to first prediction
 HGattendance <- HGattendance %>%
-  group_by(ssp, year, park) %>% # don't compare different SSPs or parks to each other
-  mutate(predicted_attendance = sum(predicted_attendance))
-HGattendance <- group_by(HGattendance, park, ssp) %>%
-  mutate(relative_visitors = predicted_attendance / first(predicted_attendance))
+  group_by(ssp, year, park) %>% # don't compare different SSPs, years, or parks to each other
+  mutate(annual_visitors = sum(predicted_visitors)) # get annual totals
+HGattendance <- HGattendance %>%
+  group_by(park, ssp) %>% # don't compare different SSPs or parks to each other
+  mutate(relative_visitors = annual_visitors / first(annual_visitors)) 
 
 # make colour strips in x-direction for panel title boxes
 strip <- strip_themed(background_x = 
@@ -81,6 +78,7 @@ projections <-
         legend.text=element_text(size=7),
         legend.box.background = element_rect(color = "black"),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+projections
 
 # save the figure
 ggsave(projections,

@@ -15,7 +15,7 @@ get_legend<-function(myggplot){
 regionlegend <- get_legend(map)
 # save size legend from temp vs precip plot
 sizelegend <- get_legend(plot)
-# remove legends from map plot
+# remove legends from all panels
 map <- map + theme(legend.position="none")
 august <- august + theme(legend.position="none")
 december <- december + theme(legend.position="none")
