@@ -25,10 +25,10 @@ LG <-
     `2-4.5` = "SSP 2-4.5",
     `3-7.0` = "SSP 3-7.0",
     `5-8.5` = "SSP 5-8.5"))) +
-  geom_line(data = LGattendance[which(LGattendance$park == PARK),], 
+  geom_line(data = LGattendance[which(LGattendance$park == "Golden Ears Park"),], 
             aes(month, predicted_visitors, group = year, col = year), 
             size=0.1) + # lines for each year
-  geom_point(data = bcparks[which(bcparks$park == PARK),] %>%
+  geom_point(data = bcparks[which(bcparks$park == "Golden Ears Park"),] %>%
                group_by(month) %>%
                summarise(visitortotal = mean(visitortotal)), 
              aes(month, visitortotal), 
@@ -37,7 +37,7 @@ LG <-
   ylab("Monthly Visitors") +
   ggtitle("A") +
   labs(subtitle = "Golden Ears Park Attendance under Low Population Growth") +
-  scale_y_continuous(labels = scales::comma, limits = c(0,375000)) +
+  scale_y_continuous(labels = scales::comma, limits = c(0, 500000)) +
   scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
   scale_colour_viridis_c(name = "Year") +
   theme_bw() +
@@ -80,7 +80,7 @@ HG <-
   ylab("Monthly Visitors") +
   ggtitle("B") +
   labs(subtitle = "Golden Ears Park Attendance under High Population Growth") +
-  scale_y_continuous(labels = scales::comma, limits = c(0,375000)) +
+  scale_y_continuous(labels = scales::comma, limits = c(0,500000)) +
   scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
   scale_colour_viridis_c(name = "Year") +
   theme_bw() +
@@ -111,5 +111,4 @@ ggsave(FIG3,
        dpi = 600,
        bg = "white",
        file="~/Desktop/bio/440/BCParks_Attendance/Figures/figure3.png")
-
 

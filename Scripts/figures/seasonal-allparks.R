@@ -55,7 +55,7 @@ for(PARK in unique(bcparks$park)[1:249]) { # repeat for all 249 parks with data
                aes(month, visitortotal), 
                col = "black", size = 1, na.rm = TRUE) + # plot historical monthly averages as points
     xlab("Month") +
-    ylab("Visitors") +
+    ylab("Monthly Visitors") +
     ggtitle("A") +
     labs(subtitle = paste(PARK, "Attendance under Low Population Growth")) +
     scale_y_continuous(labels = scales::comma, limits = c(0,MAX_VISITORS)) +
