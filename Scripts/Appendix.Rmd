@@ -1,0 +1,1189 @@
+---
+title: "Appendix: BC Parks Attendance"
+author: "Dayna K. Weststrate"
+date: "2023-03-27"
+output: 
+  html_document: 
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, error = FALSE)
+
+# Import the model
+M = readRDS("~/Desktop/bio/440/BCParks_Attendance/Scripts/models/model.rda")
+# Import the climate projection data
+climate = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/climate-projections/monthly-climate-projections.rds")
+# Import park coordinates
+park_coordinates <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/park_coordinates.csv")
+# Import relevant population projection data (LG/HG)
+LGrates <- read.csv('~/Desktop/bio/440/BCParks_Attendance/Data/projections/LG-rate-projections.csv')
+HGrates <- read.csv('~/Desktop/bio/440/BCParks_Attendance/Data/projections/HG-rate-projections.csv')
+# Import attendance projections
+LGattendance = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/projections/LG-attendance-projections.rds")
+HGattendance = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/projections/HG-attendance-projections.rds")
+# Import historical attendance
+bcparks <- readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
+# Remove camping data (unused in this study)
+bcparks <- bcparks[!bcparks$attendancetype == "camping",] 
+```
+
+# Overview
+
+This appendix details the steps we used to analyze our data, build our model, project attendance, and visualize our results.
+
+# Data Importing
+
+Attendance records were obtained directly through BC Parks. There were monthly visitor totals for two attendance types; camping and day-use. Our project focused on day-use attendance, but an identical process could be executed using BC Parks camping data (or a combination of both attendance types).
+
+In addition to dates and visitor counts, the datasets included park and region information. Park names were assigned by BC Parks (`park` column). Each park is annotated with one of five regions; Northern, South Coast, West Coast, Thompson-Cariboo, or Kootenay-Okanagan (abbreviated in the `region` column as `north`, `south`, `west`, `tc`, and `ok`, respectively). Park region was obtained by searching each park on BC Parks' ArcGIS map and finding its classification under 'Park Region Name' (Esri, 2023). Parks belonging to Omineca Peace or North Coast Skeena regions were grouped into the Northern Region.
+
+```{r data import}
+# Load necessary packages
+library('readr')
+library('stringi')
+library('tidyr')        # for data wrangling
+library('dplyr')        # for data wrangling
+library('canadianmaps') # to download a shapefile of BC
+library('elevatr')      # to download digital elevation models
+library('purrr')        # for functional programming (map_***(), etc.)
+library('sp')           # for spatial data
+library('sf')           # for spatial data
+library('terra')        # for raster data
+library('lubridate')    # for formatting dates
+library('ggplot2')      # for fancy plots
+library('khroma')       # for fancy colour palettes
+library('gridExtra')    # for arranging figure panels
+library('lme4')         # for modelling
+library('mgcv')         # for modelling
+library('viridis')      # for fancy colour palettes
+library('ggh4x')        # to fill in facet wrap title boxes
+
+
+# Import BC Parks attendance data
+camping <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/camping.csv", 
+                    na = "0", check.names = FALSE)
+dayuse <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/dayuse.csv", 
+                   na = "0", check.names = FALSE)
+
+```
+
+## Clean BC Parks Attendance Data
+
+The raw BC Parks attendance data required wrangling. We converted the camping and day-use datasets from wide to long format, combined the data from both attendance types into one dataset, and created month and year columns from the dates.
+
+```{r bcparks clean, eval = FALSE}
+# Convert from wide to long format
+camping <- gather(camping, date, visitortotal, "2010-01-01":"2019-12-01", 
+                  factor_key = TRUE)
+dayuse <- gather(dayuse, date, visitortotal, "2010-01-01":"2019-12-01", 
+                 factor_key = TRUE)
+# Remove months with no values (NAs)
+camping <- na.omit(camping)
+dayuse <- na.omit(dayuse)
+# Classify type of attendance
+camping$attendancetype <- "camping"
+dayuse$attendancetype <- "dayuse"
+# Merge day use and camping information into one dataset
+bcparks <- rbind(camping,dayuse) 
+
+# Add new columns: Month and Year
+bcparks <- bcparks %>%
+  separate(date, sep="-", into = c("year", "month", "day"))
+# Bring back the date column
+bcparks$date <- paste(paste(bcparks$year, bcparks$month, sep = "-"), 
+                      15, sep = "-") # include arbitrary day of the month
+# Ensure correct formatting of columns
+bcparks$date <- as.POSIXct(bcparks$date, format = "%Y-%m-%d")
+bcparks$month <- as.numeric(bcparks$month)
+bcparks$year <- as.numeric(bcparks$year) 
+bcparks$park <- as.factor(bcparks$park)
+# Remove day column (arbitrary number)
+bcparks = subset(bcparks, select = -c(day))
+# Remove camping data (unused in this study)
+bcparks <- bcparks[!bcparks$attendancetype == "camping",] 
+```
+
+# Data Annotation
+
+## Population
+
+Historical BC population data for 2010 through 2022 were annual estimates obtained from the Government of BC (2022) and were added under the `BCPop` column.
+
+The `visitortotal` column represents visitation as calculated by BC Parks Operators. We corrected these counts for BC population by converting visitor totals into visitors per 1,000 BC residents (`attendance` column).
+
+```{r population, eval = FALSE}
+# Import historic population data
+population_records <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/population/population_records.csv")
+# Remove unnecessary growth rate column
+population_records = subset(population_records, select =-c(3))
+# Add historic population as a column
+bcparks <- merge(bcparks,population_records,by=c("year"))
+# Correct visitor counts for population size
+bcparks$attendance <- bcparks$visitortotal/bcparks$BCpop*1000
+```
+
+## Park Coordinates
+
+The latitude and longitude coordinates of each park were determined by, again, using BC Parks' ArcGIS map to find park bounds, then placing a pin in Google Maps around the center of the park (Esri, 2023; Google, n.d.). Of course, this process is not exact, but the coordinates were used for downloading climate data proximate to each park, and weather is not likely to differ much throughout a given park.
+
+```{r coordinates, eval = FALSE}
+# Import park coordinate data
+park_coordinates <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/park_coordinates.csv")
+# Add latitude and longitude as columns
+bcparks <- merge(bcparks,park_coordinates, by=c("park", "region"))
+```
+
+## Weather
+
+Historical climate data were downloaded to attain temperature (ºC) and precipitation (mm) at each park (Wang et al., 2016). We cleaned the downloaded data so as to remove irrelevant variables and convert monthly total precipitation to average monthly precipitation. Average monthly temperatures and precipitation were represented by the columns `avgtemp` and `avgprecip`, respectively.
+
+### Annotate coordinates with elevations
+
+Each coordinate requires elevation for downloading climate data from `climatenaR`, so we annotated the park coordinate CSV file with respective elevations.
+
+```{r elevations, eval = FALSE}
+# Convert all telemetry datasets to spatial data points
+locations <- SpatialPoints(select(park_coordinates, longitude, latitude))
+ctmm::projection(locations) <- '+proj=longlat'
+
+# Import a Digital Elevation Model (DEM) for the region(s) of interest
+dem <- get_elev_raster(locations = locations,
+                       z = 3,
+                       clip = 'bbox',
+                       expand = 0.1)
+
+# Write the CSV
+park_coordinates <- mutate(locations_df,
+                           el = terra::extract(dem, locations),
+                           ID1 = 1:n(),
+                           ID2 = ID1) %>%
+  relocate(ID1:ID2)
+
+write.csv(locations_df, file = 'Data/bcparks/parks-dem.csv', row.names = FALSE)
+```
+
+### Download and clean historical climate data
+
+```{r historical climate, eval = FALSE}
+library('climatenaR')   # to download climate data and projections
+
+# If necessary, install the `climatenaR` package with
+# `remotes::install_github('burnett-m/climatenaR', build_vignettes = TRUE)`
+# *NOTE:* the `climatenaR` package requires the ClimateNA software.
+# See https://register.climatena.ca/ to download it.
+
+# Change the working directory as required by `climatenaR`
+setwd('~/Desktop/bio/440/BCParks_Attendance/climate-na/')
+
+# Download historical climate data
+for(y in 2010:2022) {
+  cat('Downloading ', y, '...\n', sep = '') # to track progress
+  histClimateNA(
+    file = 'parks-dem.csv',
+    dateR = as.character(y),
+    tFrame = 'M', # monthly averages
+    exe = 'ClimateNA_v7.31.exe',
+    outdir = 'dayna-s-park-climate-data') # exe location (in working directory)
+}
+
+# Clean historical climate data files
+historicaldata <-
+  # list all files, and import each of the CSVs
+  map_dfr(
+    list.files('Data/historical-climate', full.names = TRUE),
+    \(.fname) {
+      readr::read_csv(.fname, col_types = '?') %>%
+        # add a column of the file name
+        mutate(file = .fname)
+    }) %>%
+  mutate(year = substr(file,
+                       start = stri_locate_first(file, regex = 'dem_')[1] + 4,
+                       stop = nchar(file) - nchar('.csv'))) %>%
+  # only keep relevant columns 
+  select(year, Latitude, Longitude, Elevation, Tave01, Tave02, Tave03,
+         Tave04, Tave05, Tave06, Tave07, Tave08, Tave09, Tave10, Tave11, Tave12,
+         PPT01, PPT02, PPT03, PPT04, PPT05, PPT06, PPT07, PPT08, PPT09, PPT10,
+         PPT11, PPT12) %>% 
+  # pivot from wide to long format (only one column of precip and temp)
+  pivot_longer(-c(year, Latitude, Longitude, Elevation),
+               names_to = 'parameter', values_to = 'value') %>%
+  # extract month and year out of parameters
+  mutate(month = map_chr(parameter,
+                         \(.chr) substr(.chr, nchar(.chr) - 1, nchar(.chr))),
+         dec_date = decimal_date(date(paste(year, month, '15', sep = '-'))),
+         month = as.numeric(month),
+         year = as.numeric(year),
+         parameter = map_chr(parameter,
+                             \(.chr) substr(.chr, 1, nchar(.chr) - 2))) %>%
+  # pivot wider to make separate columns of temperature and precipitation
+  pivot_wider(names_from = parameter, values_from = value) %>%
+  # convert monthly total precipitation to average monthly precipitation
+  mutate(first_day = as.Date(paste(year, month, '01', sep = '-')),
+         next_month = if_else(month != '12', as.numeric(month + 1), 1),
+         next_year = if_else(month != '12', year, year + 1),
+         last_day = as.Date(paste(next_year, next_month, '01', sep = '-')),
+         samples = as.numeric((last_day - first_day)),
+         avgprecip = PPT / samples) %>% # convert to millimeters per day
+  # drop temporary columns
+  select(-c(first_day, next_month, next_year, last_day, samples, PPT)) %>%
+  # change column names
+  rename(avgtemp = Tave,
+         latitude = Latitude,
+         longitude = Longitude,
+         elevation = Elevation) %>%
+  relocate(c(month, dec_date), .after = year) 
+# Remove unnecessary columns from dataset
+historicaldata = select(historicaldata, -c(dec_date, elevation))
+
+
+# Add new columns to BC Parks dataset: Average temperature and precipitation 
+bcparks <- merge(x=bcparks,y=historicaldata, 
+                 by=c("latitude","longitude", "year", "month"), all.x=TRUE)
+```
+
+## Recreate Figure 1
+
+### Figure 1A: Park Distribution Map
+
+```{r fig1A}
+theme_set(theme_map())
+
+# Import a shapefile of British Columbia
+bc_shp <-
+  st_as_sf(PROV) %>% # convert to spatial features (sf) object
+  filter(PRENAME == 'British Columbia') %>% # filter to BC only
+  st_geometry() # extract boundaries only
+
+# Filter dataset such that each park only has one observation 
+parkcoords <- bcparks %>% distinct(park, latitude, longitude, .keep_all = TRUE)
+
+# Plot parks on a map of BC
+map <-
+  ggplot() +
+  ggtitle("A")+ # label the panel
+  geom_sf(data = bc_shp) + # outline of BC
+  geom_point(aes(longitude, latitude, col = region), parkcoords, 
+             size = 3, shape = 17, alpha = 0.6) + # a single point for each park
+  guides(col = guide_legend(override.aes = list(alpha=1))) +
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +
+  theme(legend.title = element_text(size = 11, face = "bold"),
+        legend.text = element_text(size = 11),
+        legend.position = "bottom",
+        legend.justification = "center",
+        legend.direction = "horizontal",
+        legend.box.background = element_rect(color = "black"),
+        plot.margin = unit(c(-1,0,-1,0), "cm"),
+        plot.title = element_text(vjust = -8.5, hjust = 0.03,
+                                  size = 30, family = "sans", face = "bold")) +
+  coord_sf() # ensures points don't get jittered around when figure dimensions change
+map
+```
+
+### Figure 1B: Historical Seasonal Trends
+
+```{r fig1B}
+seasonal <-
+  ggplot() +
+  geom_jitter(data = bcparks[which(bcparks$attendancetype == "dayuse"),],
+              aes(y = attendance, x = month, col = region),
+              alpha = 0.05, size = 1, width = 0.25,shape = 17) + # point for every observation
+  geom_smooth(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
+              aes(y = attendance, x = month, col = region),
+              size = 0.6, se = F) + # line for each region's trends
+  scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
+  scale_y_continuous(limits = c(0, 15)) +
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +
+  xlab("Month") +
+  ylab("Visitors (per 1000 people)") +
+  ggtitle("B") + # label the panel
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=7, family = "sans"),
+        axis.text.x  = element_text(size=7, family = "sans"),
+        axis.ticks.x = element_blank(),
+        plot.title = element_text(size = 25, family = "sans", face = "bold",
+                                  vjust = -5.5, hjust = 0.02),
+        legend.position = "none",
+        legend.box.background = element_rect(color = "black"),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
+seasonal
+```
+
+### Figure 1C/D: Attendance Trends by Weather
+
+In Figure 1, attendance rates as affected by temperature and precipitation are visualized for August and December. However, identical figures were produced for all months of the year and are accessible at [our GitHub repository](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/tree/main/Figures/historical%20trends).
+
+```{r fig1CD}
+# Plot for August
+august <-
+  ggplot() +
+  geom_point(data = bcparks[which(bcparks$month == "8"),], # point for every august observation
+             aes(y = avgprecip, x = avgtemp, col = region),
+             size = sqrt(bcparks[which(bcparks$month == "8"),]$attendance), # make point size proportional to attendance rate
+             alpha = 0.5,
+             shape = 16) + # point for every observation
+  xlab("Temperature (ºC)") +
+  ylab("Precipitation (mm)") +
+  ggtitle("C") + # label the panel
+  labs(subtitle = "August Attendance") +
+  scale_y_continuous(limits = c(0,7)) +
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=7, family = "sans"),
+        axis.text.x  = element_text(size=7, family = "sans"),
+        plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
+        plot.title = element_text(size = 25, family = "sans", face = "bold",
+                                  vjust = -8, hjust = 0.02),
+        legend.position = "none",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
+august
+
+# Plot for December
+december <-
+  ggplot() +
+  geom_point(data = bcparks[which(bcparks$month == "12"),], # point for every december observation
+             aes(y = avgprecip, x = avgtemp, col = region),
+             size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance), # make point size proportional to attendance rate
+             alpha = 0.5,
+             shape = 16) +
+  xlab("Temperature (ºC)") +
+  ylab("Precipitation (mm)") +
+  ggtitle("D") + # label the panel
+  labs(subtitle = "December Attendance") +
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10)) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=7, family = "sans"),
+        axis.text.x  = element_text(size=7, family = "sans"),
+        plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
+        plot.title = element_text(size = 25, family = "sans", face = "bold",
+                                  vjust = -8, hjust = 0.02),
+        legend.position = "none",
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
+december
+```
+
+```{r 1CD legend}
+# Plot both August and December observations to ensure legend has common point sizes
+plot <-
+  ggplot() +
+  geom_point(data = bcparks[which(bcparks$month == "8"),], 
+             aes(y = avgprecip, x = avgtemp, 
+                 size = sqrt(bcparks[which(bcparks$month == "8"),]$attendance)),
+             # alpha = 0.2,
+             shape = 16) +
+  geom_point(data = bcparks[which(bcparks$month == "12"),], 
+             aes(y = avgprecip, x = avgtemp, 
+                 size = sqrt(bcparks[which(bcparks$month == "12"),]$attendance)),
+             # alpha = 0.2,
+             shape = 16) +
+  labs(size='Visitors per \n1000 people') +
+  scale_size_continuous(range  = c(0.1, 8), 
+                        limits = c(0, 10), 
+                        breaks = c(2, 4, 6, 8, 10),
+                        labels = c("2" = "4", 
+                                   "4" = "16", 
+                                   "6" = "36",
+                                   "8" = "64",
+                                   "10" = "100")) + # change labels, since point size is sqrt transformed
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=10, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=10, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=7, family = "sans"),
+        axis.text.x  = element_text(size=7, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 25, family = "sans", face = "bold"),
+        legend.title = element_text(size = 10, face = "bold"),
+        legend.text = element_text(size = 10),
+        legend.box.background = element_rect(color = "black"),
+        legend.position = "right",
+        legend.direction = "horizontal",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0,0.2,0,0.2), "cm"))
+```
+
+### Combine all panels
+
+```{r fig1, fig.height = 8, fig.width = 10}
+# Make a function to grab legend from figures
+get_legend<-function(myggplot){
+  tmp <- ggplot_gtable(ggplot_build(myggplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)
+}
+# Save region legend from map
+regionlegend <- get_legend(map)
+# Save size legend from attendance/weather plot
+sizelegend <- get_legend(plot)
+# Remove legends from all plot
+map <- map + theme(legend.position="none")
+august <- august + theme(legend.position="none")
+december <- december + theme(legend.position="none")
+seasonal <- seasonal + theme(legend.position="none")
+
+# Combine all 4 panels plus two legends
+fig <- arrangeGrob(arrangeGrob(map, seasonal,
+                               ncol = 1,
+                               heights = c(8,6)), # left half
+                   arrangeGrob(august, december, sizelegend,
+                               ncol = 1,
+                               heights = c(8,8,3)), # right half
+                   ncol=2, widths = c(8, 6))
+FIG1 <- grid.arrange(regionlegend, fig,
+                     nrow = 2, heights = c(1,20))
+```
+
+
+## Recreate Figure 2
+
+```{r fig2, fig.height = 5, fig.width = 10}
+# Plot attendance in response to temperature
+temp <-
+  ggplot(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
+         aes(y = attendance, x = avgtemp)) +
+  geom_point(aes(col = region),
+             alpha = 0.01) + # points for each observation
+  geom_line(stat="smooth",method = "gam",
+            aes(col = region),
+            alpha = 0.7, size = 0.7, se = F) + # line for each region
+  geom_line(stat="smooth",method = "gam",
+            alpha = 1, col = "black", size = 1.2, se = T) + # line for overall trend
+  scale_y_continuous(limits = c(0,10)) +
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
+  xlab("Average Monthly Temperature (ºC)") +
+  ylab("Monthly Park Visitors (per 1000 people)") +
+  guides(col = guide_legend(override.aes = list(alpha=1))) +
+  ggtitle("A") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=10, family = "sans"),
+        axis.text.x  = element_text(size=8, family = "sans"),
+        plot.title = element_text(hjust = 0.04, vjust = -5, size = 35, 
+                                  family = "sans", face = "bold"),
+        legend.position=c(0.21,0.66),
+        legend.box.background = element_rect(color = "black"),
+        legend.title = element_text(face = "bold"),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+temp
+
+# Plot attendance in response to precipitation
+precip <-
+  ggplot(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
+         aes(y = attendance, x = avgprecip)) +
+  geom_point(aes(col = region),
+             alpha = 0.01) + # points for each observation
+  geom_line(stat="smooth",method = "gam",
+            aes(col = region),
+            alpha = 0.7, size = 0.7, se = F) + # line for each region
+  geom_line(stat="smooth",method = "gam",
+            alpha = 1, col = "black", size = 1.2, se = T) + # line for overall trend
+  scale_y_continuous(limits = c(0,8)) +
+  scale_x_continuous(limits = c(0,30)) +
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +  
+  xlab("Average Monthly Precipitation (mm)") +
+  ylab("Monthly Park Visitors (per 1000 people)") +
+  ggtitle("B") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=10, family = "sans"),
+        axis.text.x  = element_text(size=8, family = "sans"),
+        plot.title = element_text(hjust = 0.04, vjust = -5, size = 35, 
+                                  family = "sans", face = "bold"),
+        legend.position = "none",
+        legend.box.background = element_rect(color = "black"),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+precip
+
+# Combine the 2 panels
+FIG2 <- grid.arrange(temp, precip, 
+                     ncol=2, widths = c(6,5.2))
+
+```
+
+# Modelling
+
+## Build the HGAM
+
+Since attendance is clearly dependent on weather and season, we included smooth terms of temperature, precipitation, and month in our model. In addition, we included interaction terms between month and temperature, month and precipitation, and temperature and precipitation.
+
+We supplied our model with additional data from 2019 to 2022 for 3 Okanagan parks; Fintry Park, Skaha Bluffs Park, and E.C. Manning.
+
+```{r model, eval = FALSE}
+# Import additional data
+ok2019_2022 <- read.csv("~/Desktop/bio/440/Okanagan/Data/ok2019-2022.csv")
+# Add columns necessary to bind to `bcparks` dataset
+ok2019_2022$region <- "ok"
+ok2019_2022$attendancetype <- "dayuse"
+ok2019_2022 <- ok2019_2022 %>%
+  mutate(latitude = case_when(
+    park == "Fintry Park" ~ 50.138676,
+    park == "Skaha Bluffs Park" ~ 49.433939,
+    park == "E.C. Manning Park" ~ 49.119421
+  ))
+ok2019_2022 <- ok2019_2022 %>%
+  mutate(longitude = case_when(
+    park == "Fintry Park" ~ -119.501595,
+    park == "Skaha Bluffs Park" ~ -119.546110,
+    park == "E.C. Manning Park" ~ -120.856781
+  ))
+# Add new rows to `bcparks` dataset: 2019-2022 data for 3 Okanagan Parks
+bcparks <- rbind(bcparks,ok2019_2022) 
+
+# Model with all day-use data (recent Okanagan data included)
+M <- gam(attendance ~
+           s(month, park, bs = 'fs', 
+             xt = list(bs = 'cc'), # account for cyclic (annual) nature of attendance
+             k = 5) +
+           s(avgtemp) + 
+           s(log(avgprecip + 1e-10)) + # add a tiny number to avgprecip so we don't take log of 0
+           avgtemp:log(avgprecip + 1e-10) +
+           month:avgtemp + 
+           month:log(avgprecip + 1e-10), 
+         family = Gamma(link = 'log'),
+         data = bcparks,
+         method = 'REML',
+         knots = list(month = c(0.5, 12.5))) # state that month 1 (Jan) follows month 12 (Dec)
+```
+
+```{r model summary}
+summary(M)
+```
+
+## Check the Model
+
+To ensure the behaviour of our model was appropriate based on observed data, we predicted monthly attendance rates for historical years (2010 through 2019). Then, we visually compared the predicted values with the historical visitation rates for each month. We performed these comparisons for 2 random parks in each region.
+
+```{r model check}
+#Build datasets of a couple random parks for each region
+group <- bcparks %>% 
+  group_by(park) %>%
+  groups %>%
+  unlist %>% 
+  as.character
+#NORTHERN REGION
+north_parks <- bcparks[which(bcparks$region == "north"),] %>% 
+  group_by(park) %>% 
+  summarise() %>% 
+  sample_n(2) %>% 
+  mutate(unique_id=1:NROW(.))
+northpredict <- bcparks[which(bcparks$region == "north"),] %>% 
+  group_by(park)  %>% 
+  right_join(north_parks, by=group) %>%
+  group_by_(group)
+#SOUTH COAST
+south_parks <- bcparks[which(bcparks$region == "south"),] %>% 
+  group_by(park) %>% 
+  summarise() %>% 
+  sample_n(2) %>% 
+  mutate(unique_id=1:NROW(.))
+southpredict <- bcparks[which(bcparks$region == "south"),] %>% 
+  group_by(park)  %>% 
+  right_join(south_parks, by=group) %>%
+  group_by_(group)
+#WEST COAST
+west_parks <- bcparks[which(bcparks$region == "west"),] %>% 
+  group_by(park) %>% 
+  summarise() %>% 
+  sample_n(2) %>% 
+  mutate(unique_id=1:NROW(.))
+westpredict <- bcparks[which(bcparks$region == "west"),] %>% 
+  group_by(park)  %>% 
+  right_join(west_parks, by=group) %>%
+  group_by_(group)
+#THOMPSON-CARIBOO
+tc_parks <- bcparks[which(bcparks$region == "tc"),] %>% 
+  group_by(park) %>% 
+  summarise() %>% 
+  sample_n(2) %>% 
+  mutate(unique_id=1:NROW(.))
+tcpredict <- bcparks[which(bcparks$region == "tc"),] %>% 
+  group_by(park)  %>% 
+  right_join(tc_parks, by=group) %>%
+  group_by_(group)
+#KOOTENAY-OKANAGAN
+ok_parks <- bcparks[which(bcparks$region == "ok"),] %>% 
+  group_by(park) %>% 
+  summarise() %>% 
+  sample_n(2) %>% 
+  mutate(unique_id=1:NROW(.))
+okpredict <- bcparks[which(bcparks$region == "ok"),] %>% 
+  group_by(park)  %>% 
+  right_join(ok_parks, by=group) %>%
+  group_by_(group)
+
+#"Predict" 2010-2019 attendance for these few parks
+#NORTHERN REGION
+northpredict$predict <- predict(M, newdata = northpredict, type = "response")
+#SOUTH COAST
+southpredict$predict <- predict(M, newdata = southpredict, type = "response")
+#WEST COAST
+westpredict$predict <- predict(M, newdata = westpredict, type = "response")
+#THOMPSON-CARIBOO
+tcpredict$predict <- predict(M, newdata = tcpredict, type = "response")
+#KOOTENAY-OKANAGAN
+okpredict$predict <- predict(M, newdata = okpredict, type = "response")
+
+#Visually compare historical vs. model-predicted attendance to make sure models are behaving 
+#NORTHERN REGION
+ggplot(data = northpredict) +
+  geom_boxplot(aes(x = month, y = attendance, 
+                   group = cut_width(month, 1))) + # box plots for historical data
+  geom_point(aes(x = month, y = predict), 
+             size = 2, alpha = 0.5, col = "#CC6677") + # point for every year's prediction
+  scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
+  xlab("Month") +
+  ylab("Park visitors (per 1000 people)") +
+  ggtitle("Northern Parks: Historical vs. Projected attendance") +
+  facet_wrap(~ unique_id, labeller = as_labeller(c(
+    `1` = "Random park 1",
+    `2` = "Random park 2"))) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=9, family = "sans"),
+        axis.text.x  = element_text(size=9, angle = 45, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
+        legend.position = "right",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+
+#SOUTH COAST REGION
+ggplot(data = southpredict) +
+  geom_boxplot(aes(x = month, y = attendance, 
+                   group = cut_width(month, 1))) + # box plots for historical data
+  geom_point(aes(x = month, y = predict), 
+             size = 2, alpha = 0.5, col = "#DDCC77") + # point for every year's prediction
+  scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
+  xlab("Month") +
+  ylab("Park visitors (per 1000 people)") +
+  ggtitle("South Coast Parks: Historical vs. Projected attendance") +
+  facet_wrap(~ unique_id, labeller = as_labeller(c(
+    `1` = "Random park 1",
+    `2` = "Random park 2"))) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=9, family = "sans"),
+        axis.text.x  = element_text(size=9, angle = 45, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
+        legend.position = "right",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+
+#WEST COAST REGION
+ggplot(data = westpredict) +
+  geom_boxplot(aes(x = month, y = attendance, 
+                   group = cut_width(month, 1))) + # box plots for historical data
+  geom_point(aes(x = month, y = predict), 
+             size = 2, alpha = 0.5, col = "#88CCEE") + # point for every year's prediction
+  scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
+  xlab("Month") +
+  ylab("Park visitors (per 1000 people)") +
+  ggtitle("West Coast Parks: Historical vs. Projected attendance") +
+  facet_wrap(~ unique_id, labeller = as_labeller(c(
+    `1` = "Random park 1",
+    `2` = "Random park 2"))) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=9, family = "sans"),
+        axis.text.x  = element_text(size=9, angle = 45, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
+        legend.position = "right",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+
+#THOMPSON-CARIBOO REGION
+ggplot(data = tcpredict) +
+  geom_boxplot(aes(x = month, y = attendance, 
+                   group = cut_width(month, 1))) + # box plots for historical data
+  geom_point(aes(x = month, y = predict), 
+             size = 2, alpha = 0.5, col = "#117733") + # point for every year's prediction
+  scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
+  xlab("Month") +
+  ylab("Park visitors (per 1000 people)") +
+  ggtitle("Thompson-Cariboo Parks: Historical vs. Projected attendance") +
+  facet_wrap(~ unique_id, labeller = as_labeller(c(
+    `1` = "Random park 1",
+    `2` = "Random park 2"))) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=9, family = "sans"),
+        axis.text.x  = element_text(size=9, angle = 45, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
+        legend.position = "right",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+
+#KOOTENAY-OKANAGAN REGION
+ggplot(data = okpredict) +
+  geom_boxplot(aes(x = month, y = attendance, 
+                   group = cut_width(month, 1))) + # box plots for historical data
+  geom_point(aes(x = month, y = predict), 
+             size = 2, alpha = 0.5, col = "#332288") + # point for every year's prediction
+  scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
+  xlab("Month") +
+  ylab("Park visitors (per 1000 people)") +
+  ggtitle("Kootenay-Okanagan Parks: Historical vs. Projected attendance") +
+  facet_wrap(~ unique_id, labeller = as_labeller(c(
+    `1` = "Random park 1",
+    `2` = "Random park 2"))) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.y = element_text(size=12, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=12, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=9, family = "sans"),
+        axis.text.x  = element_text(size=9, angle = 45, family = "sans"),
+        plot.title = element_text(hjust = -0.05, size = 12, family = "sans", face = "bold"),
+        legend.position = "right",
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+
+```
+
+# Projecting
+
+To project BC Parks attendance out to 2100, we required information on the future of BC's climate and population.
+
+## Climate Change Projections
+
+Like the historical climate data, the climate change projections were downloaded to attain temperature (ºC) and precipitation (mm) at each park (Wang et al., 2016). We cleaned the downloaded data so as to remove irrelevant variables and convert monthly total precipitation to average monthly precipitation. Again, average monthly temperatures and precipitation were represented by the columns `avgtemp` and `avgprecip`, respectively.
+
+```{r cc projs, eval = FALSE}
+# Download Climate Projections
+for(y in 2021:2100) {
+  cat('Downloading ', y, '...\n', sep = '') # to track progress
+  projClimateNA(
+    file = 'parks-dem.csv',
+    tFrame = 'M', # monthly averages
+    exe = 'ClimateNA_v7.31.exe', # exe location (in working directory)
+    scen = '8GCM', # 8GCMs_ensemble General Circulation Model
+    ssp = c('S1', 'S2', 'S3', 'S5'), # Shared Socioeconomic Pathway scenarios
+    years = as.character(y))
+}
+
+# Clean Climate Projections
+climate <-
+  # list all files, and import each of the CSVs
+  map_dfr(
+    list.files(
+      'Data/climate-projections/parks-dem',
+      full.names = TRUE,
+      pattern = '@'),
+    \(.fname) {
+      readr::read_csv(.fname, col_types = '?') %>%
+        # add a column of the file name
+        mutate(file = .fname)
+    }) %>%
+  # extract scenario and year from file name column
+  mutate(scenario =
+           substr(file,
+                  start = stri_locate_last(file, regex = '/')[1] + 1,
+                  stop = stri_locate_first(file, regex = '@')[1] - 1),
+         year = substr(file,
+                       start = stri_locate_first(file, regex = '@')[1] + 1,
+                       stop = nchar(file) - nchar('.csv'))) %>%
+  # only keep relevant columns
+  select(scenario, year, Latitude, Longitude, Elevation, Tave01, Tave02,
+         Tave03, Tave04, Tave05, Tave06, Tave07, Tave08, Tave09, Tave10,
+         Tave11, Tave12, PPT01, PPT02, PPT03, PPT04, PPT05, PPT06, PPT07,
+         PPT08, PPT09, PPT10, PPT11, PPT12) %>%
+  # pivot from wide to long format (only one column of precip and temp)
+  pivot_longer(-c(scenario, year, Latitude, Longitude, Elevation),
+               names_to = 'parameter', values_to = 'value') %>%
+  # extract month and year out of parameters
+  mutate(month = map_chr(parameter,
+                         \(.chr) substr(.chr, nchar(.chr) - 1, nchar(.chr))),
+         month = as.numeric(month),
+         year = as.numeric(year),
+         parameter = map_chr(parameter,
+                             \(.chr) substr(.chr, 1, nchar(.chr) - 2))) %>%
+  # pivot wider to make separate columns of temperature and precipitation
+  pivot_wider(names_from = parameter, values_from = value) %>%
+  # convert monthly total precipitation to average monthly precipitation
+  mutate(first_day = as.Date(paste(year, month, '01', sep = '-')),
+         next_month = if_else(month != '12', as.numeric(month + 1), 1),
+         next_year = if_else(month != '12', year, year + 1),
+         last_day = as.Date(paste(next_year, next_month, '01', sep = '-')),
+         samples = as.numeric((last_day - first_day)),
+         avgprecip = PPT / samples) %>% # convert to millimeters per day
+  # change to names used in the models
+  rename(avgtemp = Tave,
+         latitude = Latitude,
+         longitude = Longitude,
+         elevation = Elevation,
+         ssp = scenario) %>%
+  # remove unnecessary columns from dataset
+  select(-c(elevation, first_day, last_day, next_month, next_year, samples, tot_precip)) %>%
+  # move month column to after the year one
+  relocate(month, .after = year)
+
+# Rename SSP levels for climate projections
+climate$scenario <- recode_factor(climate$scenario, 
+                                  "8GCMs_ensemble_ssp126" = "1-2.6", 
+                                  "8GCMs_ensemble_ssp245" = "2-4.5",
+                                  "8GCMs_ensemble_ssp370" = "3-7.0",
+                                  "8GCMs_ensemble_ssp585" = "5-8.5")
+
+```
+
+## Population Projections
+
+To predict numbers of visitors (rather than visitation as a proportion of the population), we considered the future of BC's population. Statistics Canada (2019) offered 9 different population growth scenarios; fast-aging, slow-aging, high growth, medium growth 1, medium growth 2, medium growth 3, medium growth 4, medium growth 5, and low growth. Under each of these scenarios, Statistics Canada (2019) predicted BC population growth rates for 2022/2023, 2032/2033, and 2042/2043. We projected growth rates between these decades and beyond to 2100 and used them to calculate the number of BC residents. This study focused on attendance under the high and low growth scenarios (HG and LG, respectively), but datasets with projected population under all scenarios are available on [our GitHub repository](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/tree/main/Data/projections), as well as [a figure visualizing all growth rate projections](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/blob/main/Figures/population%20growth/population-growth-rates.png).
+
+```{r pop growth data, eval = FALSE}
+# Download population growth rate file
+popgrowth <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/population/popgrowth.csv")
+
+# Ensure correct formatting  
+popgrowth$scenario <- as.factor(popgrowth$scenario)
+```
+
+### Project Growth Rates
+
+```{r pop growth projs, eval = FALSE}
+#Fit the model
+popmodel <- glmer(growthrate ~ year  + (year|scenario),
+                  family = Gamma(link="log"),
+                  data = popgrowth)
+
+summary(popmodel)
+
+# Make dataset projecting LG growth rates using model
+LGrates <- data.frame(year = seq(2022,2100, 0.1),
+                      scenario = "LG")
+LGrates$growthrate <- predict(popmodel, newdata = LGrates, type = "response")
+LGrates$population <- 0 # make population column
+LGrates[1,4] = LGrates[1,4] + 5319324 # set BC's current population in cell [1,4]
+for(i in 2:nrow(LGrates)){
+  LGrates[i,4] <- (LGrates[i,3]/1000*LGrates[i-1,4])+LGrates[i-1,4]
+} # calculate population based on growth rates and BC's current population
+
+
+# Make dataset projecting HG growth rates using model
+HGrates <- data.frame(year = seq(2020,2100, 1),
+                      scenario = "HG")
+HGrates$growthrate <- predict(popmodel, newdata = HGrates, type = "response")
+HGrates$population <- 0 # make population column
+HGrates[1,4] = HGrates[1,4] + 5319324 # set BC's current population in cell [1,4]
+for(i in 2:nrow(HGrates)){
+  HGrates[i,4] <- (HGrates[i,3]/1000*HGrates[i-1,4])+HGrates[i-1,4]
+} # calculate population based on growth rates and BC's current population
+
+```
+
+## Project Attendance Under Four SSPs and Two Population Growth Scenarios
+
+Our model predicted attendance rates (visitors per 1,000 BC residents) under the four climate change scenarios. To calculate numbers of visitors from the proportions, we created separate datasets for the two population growth scenarios and performed identical calculations.
+
+```{r projs, eval = FALSE}
+# Model requires park column, so annotate coordinates with park names
+climate <- merge(x=climate,y=coords, 
+                 by=c("latitude","longitude"), all.x=TRUE)
+
+# Predict attendance per 1,000 based on climate projections
+climate$predicted_attendance <- predict(M, newdata = climate, type = "response")
+# Ensure there are no NA values
+climate <- na.omit(climate)
+
+# Make datasets for different population growth scenarios
+LGattendance <- merge(climate,LGrates,by=c("year"))
+HGattendance <- merge(climate,HGrates,by=c("year"))
+
+# Reorganize columns
+LGattendance <- LGattendance %>% relocate(c(park, year, month, region, avgtemp, avgprecip, 
+                                            predicted_attendance, latitude, longitude, elevation), .after = ssp)
+HGattendance <- HGattendance %>% relocate(c(park, year, month, region, avgtemp, avgprecip, 
+                                            predicted_attendance, latitude, longitude, elevation), .after = ssp)
+# Make the SSP/year/month columns ascending & alphabetize the park column
+LGattendance <- LGattendance[order(LGattendance$ssp, LGattendance$park, LGattendance$year, LGattendance$month),]
+HGattendance <- HGattendance[order(HGattendance$ssp, HGattendance$park, HGattendance$year, HGattendance$month),]
+
+# Calculate projected visitor COUNTS for each population growth scenario
+LGattendance$predicted_visitors <- (LGattendance$predicted_attendance/1000)*LGattendance$population
+HGattendance$predicted_visitors <- (HGattendance$predicted_attendance/1000)*HGattendance$population
+
+# Ensure correct formatting of predictions
+LGattendance$predicted_visitors <- as.numeric(LGattendance$predicted_visitors)
+HGattendance$predicted_visitors <- as.numeric(HGattendance$predicted_visitors)
+```
+
+# Visualizing Results
+
+## Recreate Figure 3
+
+### Change in Annual Visitors Relative to 2020
+
+As these parks range vastly in attendance rates, we calculated a change in annual visitors relative to the first year of predictions (2020) for easy visualization.
+
+```{r relative visitors}
+# Calculate change in attendance relative to first prediction
+LGattendance <- LGattendance %>%
+  group_by(ssp, year, park) %>% # don't compare different SSPs, years, or parks to each other
+  mutate(annual_visitors = sum(predicted_visitors)) # get annual totals
+LGattendance <- LGattendance %>%
+  group_by(park, ssp) %>% # don't compare different SSPs or parks to each other
+  mutate(relative_visitors = annual_visitors / first(annual_visitors)) 
+
+HGattendance <- HGattendance %>%
+  group_by(ssp, year, park) %>% # don't compare different SSPs, years, or parks to each other
+  mutate(annual_visitors = sum(predicted_visitors)) # get annual totals
+HGattendance <- HGattendance %>%
+  group_by(park, ssp) %>% # don't compare different SSPs or parks to each other
+  mutate(relative_visitors = annual_visitors / first(annual_visitors)) 
+
+```
+
+### Plot
+
+```{r fig3, fig.height = 5.53, fig.width = 8.21}
+# Make colour strips in x-direction for panel title boxes (they will correspond to SSPs)
+strip <- strip_themed(background_x = 
+                        elem_list_rect(fill = c("#4EBAF9", "#C0DEED", "#FFC1B5", "#FF7B7B")))
+
+# Assign a letter for each SSP so we can label each panel
+data_text <- data.frame(label = c("A", "B", "C", "D"),
+                        ssp = names(table(LGattendance$ssp)),
+                        x = c(2023, 2023, 2023, 2023), 
+                        y = c(1.9, 1.9, 1.9, 1.9))
+
+# Plot relative growth in visitors (same values for both LG and HG, so pick either dataset)
+projections <-
+  ggplot(LGattendance, aes(x = year, y = relative_visitors)) + 
+  geom_hline(yintercept = 1, size = 0.5, color = "grey70") + # line at 1 for reference
+  geom_line(aes(group = park, col = region), 
+            size=0.5, alpha = 0.1) + # line for each park
+  facet_wrap2(~ ssp, strip = strip, labeller = as_labeller(c(
+    `1-2.6` = "SSP 1-2.6",
+    `2-4.5` = "SSP 2-4.5",
+    `3-7.0` = "SSP 3-7.0",
+    `5-8.5` = "SSP 5-8.5"))) + # create a panel for each climate change scenario
+  geom_text(data = data_text,
+            mapping = aes(x = x,
+                          y = y,
+                          label = label),
+            check_overlap = TRUE,
+            size = 8, fontface = "bold") + # label each panel
+  xlab("Year") +
+  ylab("Relative Change in Annual Visitors") +
+  scale_y_continuous(limits = c(0.75,2)) +
+  guides(col = guide_legend(override.aes = list(alpha=1))) +
+  scale_colour_muted(name="Region",
+                     labels=c('Northern', 
+                              'Kootenay-Okanagan', 
+                              'South Coast', 
+                              'Thompson-Cariboo', 
+                              'West Coast')) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text = element_text(face = "bold"),
+        axis.title.y = element_text(size=14, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=14, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=10, family = "sans"),
+        axis.text.x  = element_text(size=10, family = "sans"),
+        plot.title = element_text(size = 14, family = "sans", face = "bold"),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        legend.position=c(0.4,0.86),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.title = element_text(size = 8, face = "bold"),
+        legend.text=element_text(size=7),
+        legend.box.background = element_rect(color = "black"),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+projections
+```
+
+## Recreate Figure 4
+
+### Case Study: Golden Ears Park
+
+To closely examine the model's predictions for seasonal trends, we visualized the results for a single park; Golden Ears Park. Identical figures for all parks are available on [our GitHub repository](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/tree/main/Figures/seasonal%20projections).
+
+```{r fig4, fig.height = 6, fig.width = 10}
+# Disable scientific notation (for y-axis)
+options(scipen = 999)
+
+# Plot attendance under low population growth
+LG <-
+  ggplot() +
+  facet_wrap2(~ ssp, strip = strip, labeller = as_labeller(c(
+    `1-2.6` = "SSP 1-2.6",
+    `2-4.5` = "SSP 2-4.5",
+    `3-7.0` = "SSP 3-7.0",
+    `5-8.5` = "SSP 5-8.5"))) +
+  geom_line(data = LGattendance[which(LGattendance$park == "Golden Ears Park"),], 
+            aes(month, predicted_visitors, group = year, col = year), 
+            size=0.1) + # lines for each year
+  geom_point(data = bcparks[which(bcparks$park == "Golden Ears Park"),] %>%
+               group_by(month) %>%
+               summarise(visitortotal = mean(visitortotal)), 
+             aes(month, visitortotal), 
+             col = "black", size = 1, na.rm = TRUE) + # plot historical monthly averages as points
+  xlab("Month") +
+  ylab("Monthly Visitors") +
+  ggtitle("A") +
+  labs(subtitle = "Golden Ears Park Attendance under Low Population Growth") +
+  scale_y_continuous(labels = scales::comma, limits = c(0,500000)) +
+  scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
+  scale_colour_viridis_c(name = "Year") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text = element_text(face = "bold"),
+        axis.title.y = element_text(size=14, family = "sans", face = "bold"),
+        axis.title.x = element_text(size=14, family = "sans", face = "bold"),
+        axis.text.y = element_text(size=10, family = "sans"),
+        axis.text.x  = element_text(size=8, family = "sans", angle = 45, hjust = 1),
+        plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
+        plot.title = element_text(size = 25, family = "sans", face = "bold"),
+        legend.position=c(0.11,0.84),
+        legend.key.height = unit(0.4, 'cm'),
+        legend.key.width = unit(0.6, 'cm'),
+        legend.key.size = unit(0.25, 'cm'),
+        legend.title = element_text(size = 8, family = "sans", face = "bold"),
+        legend.text=element_text(size=7),
+        legend.box.background = element_rect(color = "black"),
+        legend.margin=margin(c(8,8,8,8)),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+HG <-
+  ggplot() +
+  facet_wrap2(~ ssp, strip = strip, labeller = as_labeller(c(
+    `1-2.6` = "SSP 1-2.6",
+    `2-4.5` = "SSP 2-4.5",
+    `3-7.0` = "SSP 3-7.0",
+    `5-8.5` = "SSP 5-8.5"))) +
+  geom_line(data = HGattendance[which(HGattendance$park == "Golden Ears Park"),], 
+            aes(month, predicted_visitors, group = year, col = year), 
+            size=0.1) + # lines for each year
+  geom_point(data = bcparks[which(bcparks$park == "Golden Ears Park"),] %>%
+               group_by(month) %>%
+               summarise(visitortotal = mean(visitortotal)), 
+             aes(month, visitortotal), 
+             col = "black", size = 1, na.rm = TRUE) + # plot historical monthly averages as points
+  xlab("Month") +
+  ylab("Monthly Visitors") +
+  ggtitle("B") +
+  labs(subtitle = "Golden Ears Park Attendance under High Population Growth") +
+  scale_y_continuous(labels = scales::comma, limits = c(0,500000)) +
+  scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
+  scale_colour_viridis_c(name = "Year") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text = element_text(face = "bold"),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size=14, family = "sans", face = "bold"),
+        axis.text.y = element_blank(),
+        axis.text.x  = element_text(size=8, family = "sans", angle = 45, hjust = 1),
+        plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
+        plot.title = element_text(size = 25, family = "sans", face = "bold"),
+        legend.position = "none",
+        legend.title = element_text(size = 12, family = "sans"),
+        legend.box.background = element_rect(color = "black"),
+        legend.margin=margin(c(8,8,8,8)),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
+        plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+
+# Combine the 2 panels
+FIG4 <- grid.arrange(LG, HG, 
+                     ncol=2, widths = c(6,5.2))
+
+```
+
+# Session Info
+
+```{r sessionInfo}
+sessionInfo()
+```
