@@ -27,6 +27,8 @@ HGattendance = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/projections/HG
 bcparks <- readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
 # Remove camping data (unused in this study)
 bcparks <- bcparks[!bcparks$attendancetype == "camping",] 
+# Remove NA values
+bcparks <- na.omit(bcparks)
 ```
 
 # Overview
@@ -37,7 +39,7 @@ This appendix details the steps we used to analyze our data, build our model, pr
 
 Attendance records were obtained directly through BC Parks. There were monthly visitor totals for two attendance types; camping and day-use. Our project focused on day-use attendance, but an identical process could be executed using BC Parks camping data (or a combination of both attendance types).
 
-In addition to dates and visitor counts, the datasets included park and region information. Park names were assigned by BC Parks (`park` column). Each park is annotated with one of five regions; Northern, South Coast, West Coast, Thompson-Cariboo, or Kootenay-Okanagan (abbreviated in the `region` column as `north`, `south`, `west`, `tc`, and `ok`, respectively). Park region was obtained by searching each park on BC Parks' ArcGIS map and finding its classification under 'Park Region Name' (Esri, 2023). Parks belonging to Omineca Peace or North Coast Skeena regions were grouped into the Northern Region.
+The records included dates, visitor counts, and park names. Park names were assigned by BC Parks (`park` column). Each park was annotated with one of five regions; Northern, South Coast, West Coast, Thompson-Cariboo, or Kootenay-Okanagan (abbreviated in the `region` column as `north`, `south`, `west`, `tc`, and `ok`, respectively). Park region was obtained by searching each park on BC Parks' ArcGIS map and finding its classification under 'Park Region Name' (Esri, 2023). Parks belonging to Omineca Peace or North Coast Skeena regions were grouped into the Northern Region.
 
 ```{r data import}
 # Load necessary packages
@@ -62,9 +64,7 @@ library('ggh4x')        # to fill in facet wrap title boxes
 
 
 # Import BC Parks attendance data
-camping <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/camping.csv", 
-                    na = "0", check.names = FALSE)
-dayuse <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/dayuse.csv", 
+bcparks <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/dayuse.csv", 
                    na = "0", check.names = FALSE)
 
 ```
@@ -75,18 +75,12 @@ The raw BC Parks attendance data required wrangling. We converted the camping an
 
 ```{r bcparks clean, eval = FALSE}
 # Convert from wide to long format
-camping <- gather(camping, date, visitortotal, "2010-01-01":"2019-12-01", 
-                  factor_key = TRUE)
-dayuse <- gather(dayuse, date, visitortotal, "2010-01-01":"2019-12-01", 
+bcparks <- gather(bcparks, date, visitortotal, "2010-01-01":"2019-12-01", 
                  factor_key = TRUE)
 # Remove months with no values (NAs)
-camping <- na.omit(camping)
-dayuse <- na.omit(dayuse)
+bcparks <- na.omit(bcparks)
 # Classify type of attendance
-camping$attendancetype <- "camping"
-dayuse$attendancetype <- "dayuse"
-# Merge day use and camping information into one dataset
-bcparks <- rbind(camping,dayuse) 
+bcparks$attendancetype <- "dayuse"
 
 # Add new columns: Month and Year
 bcparks <- bcparks %>%
@@ -101,8 +95,7 @@ bcparks$year <- as.numeric(bcparks$year)
 bcparks$park <- as.factor(bcparks$park)
 # Remove day column (arbitrary number)
 bcparks = subset(bcparks, select = -c(day))
-# Remove camping data (unused in this study)
-bcparks <- bcparks[!bcparks$attendancetype == "camping",] 
+
 ```
 
 # Data Annotation
@@ -137,11 +130,11 @@ bcparks <- merge(bcparks,park_coordinates, by=c("park", "region"))
 
 ## Weather
 
-Historical climate data were downloaded to attain temperature (ºC) and precipitation (mm) at each park (Wang et al., 2016). We cleaned the downloaded data so as to remove irrelevant variables and convert monthly total precipitation to average monthly precipitation. Average monthly temperatures and precipitation were represented by the columns `avgtemp` and `avgprecip`, respectively.
+Historical climate data were downloaded to attain average monthly temperature (ºC) and precipitation (mm) at each park (Wang et al., 2016). We cleaned the downloaded data so as to remove irrelevant variables and convert monthly total precipitation to average monthly precipitation. Average monthly temperatures and precipitation were represented by the columns `avgtemp` and `avgprecip`, respectively.
 
 ### Annotate coordinates with elevations
 
-Each coordinate requires elevation for downloading climate data from `climatenaR`, so we annotated the park coordinate CSV file with respective elevations.
+To download climate data from `climatenaR`, each coordinate required elevation, so we annotated the park coordinate CSV file with respective elevations.
 
 ```{r elevations, eval = FALSE}
 # Convert all telemetry datasets to spatial data points
@@ -291,10 +284,10 @@ map
 ```{r fig1B}
 seasonal <-
   ggplot() +
-  geom_jitter(data = bcparks[which(bcparks$attendancetype == "dayuse"),],
+  geom_jitter(data = bcparks,
               aes(y = attendance, x = month, col = region),
               alpha = 0.05, size = 1, width = 0.25,shape = 17) + # point for every observation
-  geom_smooth(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
+  geom_smooth(data = bcparks, 
               aes(y = attendance, x = month, col = region),
               size = 0.6, se = F) + # line for each region's trends
   scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
@@ -328,7 +321,7 @@ seasonal
 
 ### Figure 1C/D: Attendance Trends by Weather
 
-In Figure 1, attendance rates as affected by temperature and precipitation are visualized for August and December. However, identical figures were produced for all months of the year and are accessible at [our GitHub repository](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/tree/main/Figures/historical%20trends).
+In Figure 1, the relationship between attendance and temperature/precipitation were visualized for August and December. However, identical figures were produced for all months of the year and are accessible at [our GitHub repository](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/tree/main/Figures/historical%20trends).
 
 ```{r fig1CD}
 # Plot for August
@@ -489,6 +482,8 @@ FIG1 <- grid.arrange(regionlegend, fig,
 
 ## Recreate Figure 2
 
+### Figure 2A: Attendance and Temperature
+
 ```{r fig2, fig.height = 5, fig.width = 10}
 # Plot attendance in response to temperature
 temp <-
@@ -498,7 +493,7 @@ temp <-
              alpha = 0.01) + # points for each observation
   geom_line(stat="smooth",method = "gam",
             aes(col = region),
-            alpha = 0.7, size = 0.7, se = F) + # line for each region
+            alpha = 0.9, size = 0.7, se = F) + # line for each region
   geom_line(stat="smooth",method = "gam",
             alpha = 1, col = "black", size = 1.2, se = T) + # line for overall trend
   scale_y_continuous(limits = c(0,10)) +
@@ -510,8 +505,9 @@ temp <-
                               'West Coast')) +  
   xlab("Average Monthly Temperature (ºC)") +
   ylab("Monthly Park Visitors (per 1000 people)") +
-  guides(col = guide_legend(override.aes = list(alpha=1))) +
   ggtitle("A") +
+  # labs(subtitle = "Attendance and Temperature") +
+  guides(col = guide_legend(override.aes = list(alpha=1))) +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -521,6 +517,7 @@ temp <-
         axis.text.x  = element_text(size=8, family = "sans"),
         plot.title = element_text(hjust = 0.04, vjust = -5, size = 35, 
                                   family = "sans", face = "bold"),
+        # plot.subtitle = element_text(size = 14, family = "sans", face = "bold"),
         legend.position=c(0.21,0.66),
         legend.box.background = element_rect(color = "black"),
         legend.title = element_text(face = "bold"),
@@ -528,7 +525,11 @@ temp <-
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 temp
+```
 
+### Figure 2B: Attendance and Precipitation
+
+```{r}
 # Plot attendance in response to precipitation
 precip <-
   ggplot(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
@@ -537,7 +538,7 @@ precip <-
              alpha = 0.01) + # points for each observation
   geom_line(stat="smooth",method = "gam",
             aes(col = region),
-            alpha = 0.7, size = 0.7, se = F) + # line for each region
+            alpha = 0.9, size = 0.7, se = F) + # line for each region
   geom_line(stat="smooth",method = "gam",
             alpha = 1, col = "black", size = 1.2, se = T) + # line for overall trend
   scale_y_continuous(limits = c(0,8)) +
@@ -551,6 +552,7 @@ precip <-
   xlab("Average Monthly Precipitation (mm)") +
   ylab("Monthly Park Visitors (per 1000 people)") +
   ggtitle("B") +
+  # labs(subtitle = "Attendance and Precipitation") +
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -560,24 +562,29 @@ precip <-
         axis.text.x  = element_text(size=8, family = "sans"),
         plot.title = element_text(hjust = 0.04, vjust = -5, size = 35, 
                                   family = "sans", face = "bold"),
+        # plot.subtitle = element_text(size = 10, family = "sans", face = "bold"),
         legend.position = "none",
         legend.box.background = element_rect(color = "black"),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 precip
+```
 
+### Combine the panels
+
+```{r}
 # Combine the 2 panels
 FIG2 <- grid.arrange(temp, precip, 
                      ncol=2, widths = c(6,5.2))
-
 ```
+
 
 # Modelling
 
 ## Build the HGAM
 
-Since attendance is clearly dependent on weather and season, we included smooth terms of temperature, precipitation, and month in our model. In addition, we included interaction terms between month and temperature, month and precipitation, and temperature and precipitation.
+Since attendance was clearly influenced on weather and season, we included smooth terms of temperature, precipitation, and month in our model. In addition, we included interaction terms between month and temperature, month and precipitation, and temperature and precipitation. These interactions were meant to capture the correlation between month and weather, as well as the correlation between temperature and precipitation themselves.
 
 We supplied our model with additional data from 2019 to 2022 for 3 Okanagan parks; Fintry Park, Skaha Bluffs Park, and E.C. Manning.
 
@@ -612,7 +619,7 @@ M <- gam(attendance ~
            avgtemp:log(avgprecip + 1e-10) +
            month:avgtemp + 
            month:log(avgprecip + 1e-10), 
-         family = Gamma(link = 'log'),
+         family = Gamma(link = 'log'), # attendance can never be negative
          data = bcparks,
          method = 'REML',
          knots = list(month = c(0.5, 12.5))) # state that month 1 (Jan) follows month 12 (Dec)
@@ -624,7 +631,7 @@ summary(M)
 
 ## Check the Model
 
-To ensure the behaviour of our model was appropriate based on observed data, we predicted monthly attendance rates for historical years (2010 through 2019). Then, we visually compared the predicted values with the historical visitation rates for each month. We performed these comparisons for 2 random parks in each region.
+To ensure the behaviour of our model was appropriate based on observed data, we predicted monthly attendance rates for historical years (2010 through 2019). Then, we visually compared the predicted values to the historical counts for each month. We performed these comparisons for 2 random parks in each region.
 
 ```{r model check}
 #Build datasets of a couple random parks for each region
@@ -835,7 +842,7 @@ To project BC Parks attendance out to 2100, we required information on the futur
 
 ## Climate Change Projections
 
-Like the historical climate data, the climate change projections were downloaded to attain temperature (ºC) and precipitation (mm) at each park (Wang et al., 2016). We cleaned the downloaded data so as to remove irrelevant variables and convert monthly total precipitation to average monthly precipitation. Again, average monthly temperatures and precipitation were represented by the columns `avgtemp` and `avgprecip`, respectively.
+Like the historical climate data, the climate change projections were downloaded to attain average monthly temperature (ºC) and precipitation (mm) at each park (Wang et al., 2016). We cleaned the downloaded data so as to remove irrelevant variables and convert monthly total precipitation to average monthly precipitation. Again, average monthly temperatures and precipitation were represented by the columns `avgtemp` and `avgprecip`, respectively.
 
 ```{r cc projs, eval = FALSE}
 # Download Climate Projections
@@ -917,7 +924,7 @@ climate$scenario <- recode_factor(climate$scenario,
 
 ## Population Projections
 
-To predict numbers of visitors (rather than visitation as a proportion of the population), we considered the future of BC's population. Statistics Canada (2019) offered 9 different population growth scenarios; fast-aging, slow-aging, high growth, medium growth 1, medium growth 2, medium growth 3, medium growth 4, medium growth 5, and low growth. Under each of these scenarios, Statistics Canada (2019) predicted BC population growth rates for 2022/2023, 2032/2033, and 2042/2043. We projected growth rates between these decades and beyond to 2100 and used them to calculate the number of BC residents. This study focused on attendance under the high and low growth scenarios (HG and LG, respectively), but datasets with projected population under all scenarios are available on [our GitHub repository](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/tree/main/Data/projections), as well as [a figure visualizing all growth rate projections](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/blob/main/Figures/population%20growth/population-growth-rates.png).
+To predict numbers of visitors (rather than attendance as a proportion of the population), we considered the future of BC's population. Statistics Canada (2019) offered 9 different population growth scenarios; fast-aging, slow-aging, high growth, medium growth 1, medium growth 2, medium growth 3, medium growth 4, medium growth 5, and low growth. Under each of these scenarios, Statistics Canada (2019) predicted BC population growth rates for 2022/2023, 2032/2033, and 2042/2043. We projected growth rates between these decades and beyond to 2100 and used them to calculate the number of BC residents. This study focused on attendance under the high and low growth scenarios (HG and LG, respectively), but datasets with projected population under all scenarios are available on [our GitHub repository](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/tree/main/Data/projections), as well as [a figure visualizing all growth rate projections](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/blob/main/Figures/population%20growth/population-growth-rates.png).
 
 ```{r pop growth data, eval = FALSE}
 # Download population growth rate file
@@ -962,7 +969,7 @@ for(i in 2:nrow(HGrates)){
 
 ## Project Attendance Under Four SSPs and Two Population Growth Scenarios
 
-Our model predicted attendance rates (visitors per 1,000 BC residents) under the four climate change scenarios. To calculate numbers of visitors from the proportions, we created separate datasets for the two population growth scenarios and performed identical calculations.
+We predicted attendance rates (visitors per 1,000 BC residents) under four climate change scenarios (SSP 1-2.6, SSP 2-4.5, SSP 3-7.0, and SSP 5-8.5). To calculate numbers of visitors from the proportions, we created separate datasets for the two population growth scenarios and performed identical calculations.
 
 ```{r projs, eval = FALSE}
 # Model requires park column, so annotate coordinates with park names
@@ -1086,7 +1093,7 @@ projections
 
 ### Case Study: Golden Ears Park
 
-To closely examine the model's predictions for seasonal trends, we visualized the results for a single park; Golden Ears Park. Identical figures for all parks are available on [our GitHub repository](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/tree/main/Figures/seasonal%20projections).
+To closely examine the model's predictions for seasonal trends under different population growth scenarios, we visualized the results of a single park; Golden Ears Park. Identical figures for all parks are available on [our GitHub repository](https://github.com/QuantitativeEcologyLab/BCParks_Attendance/tree/main/Figures/seasonal%20projections).
 
 ```{r fig4, fig.height = 6, fig.width = 10}
 # Disable scientific notation (for y-axis)
@@ -1136,6 +1143,7 @@ LG <-
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+# Plot attendance under high population growth
 HG <-
   ggplot() +
   facet_wrap2(~ ssp, strip = strip, labeller = as_labeller(c(
