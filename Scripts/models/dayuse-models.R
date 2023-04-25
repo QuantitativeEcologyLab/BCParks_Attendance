@@ -42,7 +42,7 @@ M_alldata <- gam(attendance ~
                    s(month, park, bs = 'fs', xt = list(bs = 'cc'), k = 5) +
                    s(avgtemp) + s(log(avgprecip + 1e-10)) + avgtemp:log(avgprecip + 1e-10) +
                    month:avgtemp + month:log(avgprecip + 1e-10), #add a tiny number to avgprecip so we don't take log of 0
-                 family = Gamma(link = 'log'),
+                 family = Gamma(link = 'log'), # attendance is never negative
                  data = filter(alldata, attendancetype == "dayuse"),
                  method = 'REML',
                  knots = list(month = c(0.5, 12.5)))

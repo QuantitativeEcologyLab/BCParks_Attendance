@@ -1,3 +1,10 @@
+library(ggplot2)
+library(gridExtra)
+library(khroma)
+
+# Import the historical data
+bcparks = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
+
 # Plot attendance in response to temperature
 temp <-
   ggplot(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
@@ -6,7 +13,7 @@ temp <-
              alpha = 0.01) + # points for each observation
   geom_line(stat="smooth",method = "gam",
             aes(col = region),
-            alpha = 0.7, size = 0.7, se = F) + # line for each region
+            alpha = 0.9, size = 0.7, se = F) + # line for each region
   geom_line(stat="smooth",method = "gam",
             alpha = 1, col = "black", size = 1.2, se = T) + # line for overall trend
   scale_y_continuous(limits = c(0,10)) +
@@ -46,7 +53,7 @@ precip <-
              alpha = 0.01) + # points for each observation
   geom_line(stat="smooth",method = "gam",
             aes(col = region),
-            alpha = 0.7, size = 0.7, se = F) + # line for each region
+            alpha = 0.9, size = 0.7, se = F) + # line for each region
   geom_line(stat="smooth",method = "gam",
             alpha = 1, col = "black", size = 1.2, se = T) + # line for overall trend
   scale_y_continuous(limits = c(0,8)) +
