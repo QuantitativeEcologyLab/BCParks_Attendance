@@ -41,7 +41,7 @@ Attendance records were obtained directly through BC Parks. There were monthly v
 
 The records included dates, visitor counts, and park names. Park names were assigned by BC Parks (`park` column). Each park was annotated with one of five regions; Northern, South Coast, West Coast, Thompson-Cariboo, or Kootenay-Okanagan (abbreviated in the `region` column as `north`, `south`, `west`, `tc`, and `ok`, respectively). Park region was obtained by searching each park on BC Parks' ArcGIS map and finding its classification under 'Park Region Name' (Esri, 2023). Parks belonging to Omineca Peace or North Coast Skeena regions were grouped into the Northern Region.
 
-```{r data import}
+```{r package loading}
 # Load necessary packages
 library('readr')
 library('stringi')
@@ -61,13 +61,14 @@ library('lme4')         # for modelling
 library('mgcv')         # for modelling
 library('viridis')      # for fancy colour palettes
 library('ggh4x')        # to fill in facet wrap title boxes
+```
 
-
+```{r data import, eval = FALSE}
 # Import BC Parks attendance data
 bcparks <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/dayuse.csv", 
                    na = "0", check.names = FALSE)
-
 ```
+
 
 ## Clean BC Parks Attendance Data
 
@@ -632,6 +633,11 @@ summary(M)
 ## Check the Model
 
 To ensure the behaviour of our model was appropriate based on observed data, we predicted monthly attendance rates for historical years (2010 through 2019). Then, we visually compared the predicted values to the historical counts for each month. We performed these comparisons for 2 random parks in each region.
+
+```{r set seed, include = FALSE}
+set.seed(42)
+```
+
 
 ```{r model check}
 #Build datasets of a couple random parks for each region
