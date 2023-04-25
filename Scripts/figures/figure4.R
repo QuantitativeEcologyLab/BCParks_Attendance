@@ -1,5 +1,6 @@
 library(ggplot2)
 library(gridExtra)
+library(dplyr)
 library(ggh4x) # to fill in facet wrap title boxes
 
 # Import the historical data
@@ -18,6 +19,7 @@ options(scipen = 999)
 # make colour strips in x-direction for panel title boxes
 strip <- strip_themed(background_x = 
                         elem_list_rect(fill = c("#4EBAF9", "#C0DEED", "#FFC1B5", "#FF7B7B")))
+# Plot attendance under low population growth
 LG <-
   ggplot() +
   facet_wrap2(~ ssp, strip = strip, labeller = as_labeller(c(
@@ -37,7 +39,7 @@ LG <-
   ylab("Monthly Visitors") +
   ggtitle("A") +
   labs(subtitle = "Golden Ears Park Attendance under Low Population Growth") +
-  scale_y_continuous(labels = scales::comma, limits = c(0, 500000)) +
+  scale_y_continuous(labels = scales::comma, limits = c(0,500000)) +
   scale_x_continuous(breaks = seq_along(month.abb), labels = month.abb) +
   scale_colour_viridis_c(name = "Year") +
   theme_bw() +
