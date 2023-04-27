@@ -1,7 +1,7 @@
 ---
 title: "Appendix: BC Parks Attendance"
-author: "Dayna K. Weststrate"
-date: "2023-03-27"
+author: "Dayna K Weststrate, Aimee Chhen, Stefano Mezzini, Michael J Noonan"
+date: "2023-04-27"
 output: 
   html_document: 
     toc: yes
@@ -131,7 +131,7 @@ bcparks <- merge(bcparks,park_coordinates, by=c("park", "region"))
 
 ## Weather
 
-Historical climate data were downloaded to attain average monthly temperature (ºC) and precipitation (mm) at each park (Wang et al., 2016). We cleaned the downloaded data so as to remove irrelevant variables and convert monthly total precipitation to average monthly precipitation. Average monthly temperatures and precipitation were represented by the columns `avgtemp` and `avgprecip`, respectively.
+Historical climate data were downloaded to attain average monthly temperature (ºC) and precipitation (mm) at each park (Wang et al., 2016). We cleaned the downloaded data to remove irrelevant variables and convert monthly total precipitation to average monthly precipitation. Average monthly temperatures and precipitation were represented by the columns `avgtemp` and `avgprecip`, respectively.
 
 ### Annotate coordinates with elevations
 
@@ -236,6 +236,8 @@ historicaldata = select(historicaldata, -c(dec_date, elevation))
 bcparks <- merge(x=bcparks,y=historicaldata, 
                  by=c("latitude","longitude", "year", "month"), all.x=TRUE)
 ```
+
+# Visualizing Data
 
 ## Recreate Figure 1
 
@@ -485,7 +487,7 @@ FIG1 <- grid.arrange(regionlegend, fig,
 
 ### Figure 2A: Attendance and Temperature
 
-```{r fig2, fig.height = 5, fig.width = 10}
+```{r fig2a}
 # Plot attendance in response to temperature
 temp <-
   ggplot(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
@@ -530,7 +532,7 @@ temp
 
 ### Figure 2B: Attendance and Precipitation
 
-```{r}
+```{r fig2b}
 # Plot attendance in response to precipitation
 precip <-
   ggplot(data = bcparks[which(bcparks$attendancetype == "dayuse"),], 
@@ -574,7 +576,7 @@ precip
 
 ### Combine the panels
 
-```{r}
+```{r fig2, fig.height = 5, fig.width = 10}
 # Combine the 2 panels
 FIG2 <- grid.arrange(temp, precip, 
                      ncol=2, widths = c(6,5.2))
@@ -585,7 +587,7 @@ FIG2 <- grid.arrange(temp, precip,
 
 ## Build the HGAM
 
-Since attendance was clearly influenced on weather and season, we included smooth terms of temperature, precipitation, and month in our model. In addition, we included interaction terms between month and temperature, month and precipitation, and temperature and precipitation. These interactions were meant to capture the correlation between month and weather, as well as the correlation between temperature and precipitation themselves.
+Since attendance was clearly influenced by weather and season, we included smooth terms of temperature, precipitation, and month in our model. In addition, we included interaction terms between month and temperature, month and precipitation, and temperature and precipitation. These interactions were meant to capture the correlation between month and weather, as well as the correlation between temperature and precipitation themselves.
 
 We supplied our model with additional data from 2019 to 2022 for 3 Okanagan parks; Fintry Park, Skaha Bluffs Park, and E.C. Manning.
 
@@ -1015,7 +1017,7 @@ HGattendance$predicted_visitors <- as.numeric(HGattendance$predicted_visitors)
 
 ### Change in Annual Visitors Relative to 2020
 
-As these parks range vastly in attendance rates, we calculated a change in annual visitors relative to the first year of predictions (2020) for easy visualization.
+As these parks range vastly in attendance rates, we calculated a change in annual visitors relative to the first year of predictions (2020) for easy visualization and comparison.
 
 ```{r relative visitors}
 # Calculate change in attendance relative to first prediction
