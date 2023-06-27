@@ -84,5 +84,5 @@ projections
 ggsave(projections,
        width = 8.21, height = 5.53, units = "in",
        dpi = 600,
-       bg = "transparent",
+       bg = "white",
        file="~/Desktop/bio/440/BCParks_Attendance/Figures/figure3.png")
