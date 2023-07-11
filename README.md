@@ -1,2 +1,2 @@
 # BCParks_Attendance
-Dayna's Honours Thesis — How BC Parks attendance will change according to climate change and population growth in BC.
+How attendance and human-wildlife interactions will change according to population growth and climate change in British Columbia protected areas.
