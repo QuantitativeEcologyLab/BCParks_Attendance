@@ -1,19 +1,18 @@
 library(mgcv)
 library(tidyverse)
 
-setwd("C:/Users/achhen/OneDrive - UBC/Github/bcparks")
 # Import the climate projection data
-climate = readRDS("RDS/monthly-climate-projections.rds")
+climate = readRDS("Data/Attendance/Climate/climate-projections/monthly-climate-projections.rds")
 # Import park coordinates
-park_coordinates <- read.csv("data/park_coordinates.csv")
+park_coordinates <- read.csv("Data/Attendance/Park Data/park_coordinates.csv")
 # Import relevant population projection data (LG/HG)
-LGrates <- read.csv('data/LG-rate-projections.csv')
-HGrates <- read.csv('data/HG-rate-projections.csv')
-# Import attendance projections
-LGattendance = readRDS("RDS/LG-attendance-projections.rds")
-HGattendance = readRDS("RDS/HG-attendance-projections.rds")
+LGrates <- read.csv('Data/Attendance/projections/Population Growth/LG-rate-projections.csv')
+HGrates <- read.csv('Data/Attendance/projections/Population Growth/HG-rate-projections.csv')
+# Import the attendance projections for relevant pop growth scenarios
+LGattendance = readRDS("Data/Attendance/projections/Attendance/LG-attendance-projections.rds")
+HGattendance = readRDS("Data/Attendance/projections/Attendance/HG-attendance-projections.rds")
 # Import historical attendance
-bcparks <- readRDS("RDS/bcparks.rds")
+bcparks <- readRDS("Data/Attendance/Park Data/bcparks.rds")
 
 #..................................
 
@@ -25,27 +24,8 @@ bcparks$region <- as.factor(bcparks$region)
 bcparks <- droplevels(bcparks)
 #..................................
 
-START <-  Sys.time()
-model <- bam(attendance ~
-               s(park, bs = 're') +
-               s(month, park, bs = 'fs', xt = list(bs = 'cc'), k = 5) +         #random intercept & slope effect of park level trend
-               s(avgtemp, bs = 'tp', k = 8) +                                   #global effect of temperature, specify k explicitly (even if it is the default)
-               s(log(avgprecip + 1e-10), bs = 'tp', k = 6) +                    #global effect of precipitation, add a tiny number to avgprecip so we don't take log of 0
-               ti(avgtemp, log(avgprecip + 1e-10), bs = c('tp', 'tp'), k = 5) + #response to snow
-               ti(month, avgtemp, k = 5, bs = c('cc', 'tp')) +                  #what is hot in january is cold in july
-               ti(month, log(avgprecip + 1e-10), bs = c('cc', 'tp'), k = 5),
-             family = Gamma(link = 'log'),
-             data = bcparks,
-             method = 'fREML',
-             discrete = TRUE,
-             control = gam.control(nthreads = 10, trace = TRUE),
-             knots = list(month = c(0.5, 12.5)))
-saveRDS(model, file = "RDS/model.RDS")
-END <-  Sys.time()
-TIME_DURATION <- END - START
-
 # Import the model
-model <- readRDS("model.RDS")
+model <- readRDS("Scripts/Attendance/models/attendance_model.RDS")
 
 # Figure 2 ----
 # Note: this script relies on previously fitted data and model objects.
@@ -59,7 +39,6 @@ library(khroma)
 
 #Load in the data and model
 regions <- aggregate(region ~ park, data = bcparks, FUN = "unique")
-#model <- readRDS("~/Downloads/model.rds") #note: this needed to be manually changed from rda to rds
 
 #Number of parks to loop over
 PARKS <- levels(bcparks$park)
@@ -95,10 +74,6 @@ for(i in 1:N){
 
 END2 <-  Sys.time()
 END2 - START2
-
-#Save predictions
-#save(res, file = "temp_preds.Rda")
-#load("temp_preds.Rda")
 
 #Merge and aggregate by region
 res2 <- merge(res, regions, by.x = "park", by = "park", all.x = T)
@@ -250,10 +225,6 @@ library(ggplot2)
 library(khroma)
 library(ggh4x) # to fill in facet wrap title boxes
 
-# Import the attendance projections for relevant pop growth scenarios
-LGattendance = readRDS("RDS/LG-attendance-projections.rds")
-HGattendance = readRDS("RDS/HG-attendance-projections.rds")
-
 # Calculate change in attendance relative to first prediction
 LGattendance <- LGattendance %>%
   group_by(ssp, year, park) %>% # don't compare different SSPs, years, or parks to each other
@@ -334,7 +305,7 @@ ggsave(projections,
        width = 8.21, height = 5.53, units = "in",
        dpi = 600,
        bg = "white",
-       file="figures/figure3_oldmodel.png")
+       file="figures/figure3.png")
 
 # Figure 4 ----
 
