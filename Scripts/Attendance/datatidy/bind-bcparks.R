@@ -3,12 +3,12 @@ library(readr)
 library(dplyr)
 
 #Import historical climate data
-historicaldata = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/historical-climate-data.rds")
+historicaldata = readRDS("Data/Attendance/Climate/historical-climate-data.rds")
 
 #Import Camping and Day-use data 
-setwd("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks")
-camping <- read.csv("camping.csv", na = "0", check.names = FALSE)
-dayuse <- read.csv("dayuse.csv", na = "0", check.names = FALSE)
+# setwd("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks")
+camping <- read.csv("Data/Attendance/Park Data/camping.csv", na = "0", check.names = FALSE)
+dayuse <- read.csv("Data/Attendance/Park Data/dayuse.csv", na = "0", check.names = FALSE)
 
 # CLEAN ATTENDANCE DATA
 #Convert from wide to long format
@@ -37,7 +37,7 @@ bcparks = subset(bcparks, select = -c(day))
 
 #ADD NEW COLUMN: BC POPULATION
 #import historic population data
-population_records <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/population/population_records.csv")
+population_records <- read.csv("Data/Attendance/population/population_records.csv")
 #remove unnecessary growth rate column
 population_records = subset(population_records, select =-c(3))
 #add historic population as a column
@@ -50,7 +50,7 @@ bcparks$attendance <- bcparks$visitortotal/bcparks$BCpop*1000
 
 #ADD NEW COLUMNS: LATITUDE AND LONGITUDE COORDINATES
 #import park coordinate data
-park_coordinates <- read.csv("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/park_coordinates.csv")
+park_coordinates <- read.csv("Data/Attendance/Park Data/park_coordinates.csv")
 #add latitude and longitude as columns
 bcparks <- merge(bcparks,park_coordinates, by=c("park", "region"))
 
@@ -67,4 +67,4 @@ bcparks$park <- as.factor(bcparks$park)
 rm(camping,dayuse,park_coordinates,population_records,historicaldata)
 
 #Save data as rds
-saveRDS(bcparks, file = "~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
+saveRDS(bcparks, file = "Data/Attendance/Park Data/bcparks.rds")
