@@ -3,7 +3,6 @@
 ## National parks map  ----
 #............................................................
 
-library(readr)
 library(dplyr)           #data wrangling
 library(canadianmaps)    #to download a shapefile of BC
 library(sf)              #for spatial data
@@ -16,10 +15,10 @@ bc_shape <-
   filter(PRENAME == 'British Columbia') %>% # filter to BC only
   st_geometry() # extract boundaries only
 
-#import coordinates obtained from Google maps of the national parks
-nationalparks_bc_coordinates <- read_csv("data/ClimateNA_v731/nationalparks_bc_coordinates.csv")
+# Import coordinates obtained from Google maps of the national parks
+nationalparks_bc_coordinates <- read.csv("Data/HWI/ClimateNA_v731/nationalparks_bc_coordinates.csv")
 
-#convert all telemetry dataset to spatial data points
+# Convert all telemetry dataset to spatial data points
 nationalparks_location <- SpatialPoints(select(nationalparks_bc_coordinates, longitude, latitude))
 
 #do not load the the ctmm package for this or you will run into errors
@@ -61,3 +60,21 @@ map
 ggsave(map, 
        filename = "figures/map.png", 
        device = NULL, path = NULL, scale = 1, width = 6, height = 6, units = "in", dpi = 600)
+
+
+
+#map <-
+  ggplot() +
+  geom_sf(data = bc_shape) +
+  geom_point(data = nationalparks_bc_coordinates, aes(longitude, latitude), 
+             col = 'black', size = 3, shape = 16) +
+  #guides(col = guide_legend(override.aes = list(alpha=1))) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = c(0.15, 0.2), #horizontal, vertical
+        legend.background=element_blank(),
+        plot.margin = unit(c(-1,0,-1,0), "cm"),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),) +
+  coord_sf() # ensures points don't get jittered around when figure dimensions change
+map
