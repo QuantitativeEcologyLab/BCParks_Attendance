@@ -14,8 +14,8 @@ bc_shp <-
   st_geometry() # extract boundaries only
 
 # Import BC Parks data
-bcparks = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
-parks <- read.csv('~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/park_coordinates.csv')
+bcparks = readRDS("Data/Attendance/Park Data/bcparks.rds")
+parks <- read.csv('Data/Attendance/Park Data/park_coordinates.csv')
 
 # Remove parks with no data (were not used)
 parks <- merge(bcparks, parks, by=c("park", "latitude", "longitude", "region"))
@@ -24,7 +24,7 @@ parks <- na.omit(parks)
 # Filter data set such that each park only has one observation 
 parks <- parks %>% distinct(park, latitude, longitude, .keep_all = TRUE)
 
-map <-
+#map <-
 ggplot() +
   ggtitle("A")+
   geom_sf(data = bc_shp) +
@@ -47,4 +47,6 @@ ggplot() +
         plot.title = element_text(vjust = -8.5, hjust = 0.03,
                                   size = 30, family = "sans", face = "bold")) +
   coord_sf() # ensures points don't get jittered around when figure dimensions change
+
+
 

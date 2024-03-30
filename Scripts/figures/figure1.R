@@ -1,9 +1,10 @@
 library(gridExtra)
 
 # source in map of parks 
-source("~/Desktop/bio/440/BCParks_Attendance/Scripts/figures/map-bcparks.R")
+#source("Scripts/figures/map-bcparks.R")
+source("Scripts/figures/map_pp_np.R")
 # source in historical trend plots 
-source("~/Desktop/bio/440/BCParks_Attendance/Scripts/figures/historical-trends.R")
+source("Scripts/figures/historical-trends.R")
 # make function to grab legend from figures
 get_legend<-function(myggplot){
   tmp <- ggplot_gtable(ggplot_build(myggplot))
@@ -30,11 +31,12 @@ fig <- grid.arrange(arrangeGrob(map, seasonal,
                                 heights = c(8,8,3)), # right half
                     ncol=2, widths = c(8, 6))
 FIG1 <- grid.arrange(regionlegend, fig,
-                     nrow = 2, heights = c(1,20))
+                     nrow = 2, heights = c(2,20))
 
 #save all plots
 ggsave(FIG1,
        width = 10, height = 8, units = "in",
        dpi = 600,
        bg = "white",
-       file="~/Desktop/bio/440/BCParks_Attendance/Figures/figure1.png")
+       file="Figures/figure1_revision_R2.png")
+

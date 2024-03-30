@@ -3,7 +3,7 @@ library(gridExtra)
 library(khroma)
 
 # Import the historical data
-bcparks = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/Park Data/Attendance/bcparks.rds")
+bcparks = readRDS("Data/Attendance/Park Data/bcparks.rds")
 
 # Attendance by month: to see seasonal trends
 seasonal <-
