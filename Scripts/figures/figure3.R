@@ -4,8 +4,8 @@ library(khroma)
 library(ggh4x) # to fill in facet wrap title boxes
 
 # Import the attendance projections for relevant pop growth scenarios
-LGattendance = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/projections/LG-attendance-projections.rds")
-HGattendance = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/projections/HG-attendance-projections.rds")
+LGattendance = readRDS("Data/Attendance/projections/Attendance/LG-attendance-projections.rds")
+HGattendance = readRDS("Data/Attendance/projections/Attendance/HG-attendance-projections.rds")
 
 # Calculate change in attendance relative to first prediction
 LGattendance <- LGattendance %>%
@@ -37,7 +37,7 @@ data_text <- data.frame(label = c("A", "B", "C", "D"),
 # both LG and HG, so just pick one dataset)
 projections <-
   ggplot(LGattendance, aes(x = year, y = relative_visitors)) + 
-  geom_hline(yintercept = 1, size = 0.5, color = "grey70") + # line at 1
+  geom_hline(yintercept = 1, linewidth = 0.5, color = "grey70") + # line at 1
   geom_line(size=0.5, aes(group = park, col = region), alpha = 0.1) + # line for each park
   facet_wrap2(~ ssp, strip = strip, labeller = as_labeller(c(
     `1-2.6` = "SSP 1-2.6",
@@ -65,18 +65,20 @@ projections <-
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         strip.text = element_text(face = "bold"),
+        plot.title = element_text(size = 14, family = "sans", face = "bold"),
         axis.title.y = element_text(size=14, family = "sans", face = "bold"),
         axis.title.x = element_text(size=14, family = "sans", face = "bold"),
         axis.text.y = element_text(size=10, family = "sans"),
         axis.text.x  = element_text(size=10, family = "sans"),
-        plot.title = element_text(size = 14, family = "sans", face = "bold"),
-        panel.background = element_rect(fill = "transparent"),
-        plot.background = element_rect(fill = "transparent", color = NA),
         legend.position=c(0.4,0.86),
         legend.key.size = unit(0.4, 'cm'),
+        legend.key = element_rect(color = NA),
         legend.title = element_text(size = 8, face = "bold"),
         legend.text=element_text(size=7),
-        legend.box.background = element_rect(color = "black"),
+        legend.background=element_blank(),
+        #legend.box.background = element_rect(color = "black"),
+        panel.background = element_rect(fill = "transparent"),
+        plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
 projections
 
@@ -85,4 +87,4 @@ ggsave(projections,
        width = 8.21, height = 5.53, units = "in",
        dpi = 600,
        bg = "white",
-       file="~/Desktop/bio/440/BCParks_Attendance/Figures/figure3.png")
+       file="Figures/figure3.png")

@@ -3,14 +3,15 @@ library(gridExtra)
 library(dplyr)
 library(ggh4x) # to fill in facet wrap title boxes
 
-# Import the historical data
-bcparks = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/bcparks/bcparks.rds")
+# Import historical attendance
+bcparks <- readRDS("Data/Attendance/Park Data/bcparks.rds")
 bcparks$year <- as.numeric(bcparks$year) # fix year format
-bcparks <- bcparks[!bcparks$attendancetype == "camping",] # remove historical camping data (not relevant)
+# Remove camping data (unused in this study)
+bcparks <- bcparks[!bcparks$attendancetype == "camping",] 
 
 # Import the attendance projections for relevant pop growth scenarios
-LGattendance = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/projections/LG-attendance-projections.rds")
-HGattendance = readRDS("~/Desktop/bio/440/BCParks_Attendance/Data/projections/HG-attendance-projections.rds")
+LGattendance = readRDS("Data/Attendance/projections/Attendance/LG-attendance-projections.rds")
+HGattendance = readRDS("Data/Attendance/projections/Attendance/HG-attendance-projections.rds")
 
 # Disable scientific notation (for y-axis)
 options(scipen = 999)
@@ -56,10 +57,11 @@ LG <-
         legend.key.height = unit(0.4, 'cm'),
         legend.key.width = unit(0.6, 'cm'),
         legend.key.size = unit(0.25, 'cm'),
+        legend.key = element_rect(color = NA),
         legend.title = element_text(size = 8, family = "sans", face = "bold"),
         legend.text=element_text(size=7),
-        legend.box.background = element_rect(color = "black"),
         legend.margin=margin(c(8,8,8,8)),
+        legend.background=element_blank(),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
@@ -99,9 +101,14 @@ HG <-
         legend.title = element_text(size = 12, family = "sans"),
         legend.box.background = element_rect(color = "black"),
         legend.margin=margin(c(8,8,8,8)),
+        legend.background=element_blank(),
         panel.background = element_rect(fill = "transparent"),
         plot.background = element_rect(fill = "transparent", color = NA),
         plot.margin = unit(c(0.2,0.1,0.2,0.2), "cm"))
+
+#.......................................................
+## Multi-panel  ----
+#.......................................................
 
 # Combine the 2 panels
 FIG4 <- grid.arrange(LG, HG, 
@@ -112,5 +119,5 @@ ggsave(FIG4,
        width = 10, height = 6, units = "in",
        dpi = 600,
        bg = "white",
-       file="~/Desktop/bio/440/BCParks_Attendance/Figures/figure4.png")
+       file="Figures/figure4.png")
 
