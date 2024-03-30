@@ -18,7 +18,7 @@ bc_shp <-
   st_geometry() # extract boundaries only
 
 # convert all telemetry datasets to spatial data points ----
-locations_df <- read.csv('Data/parks/park_coordinates.csv')
+locations_df <- read.csv('Data/Attendance/Park Data/park_coordinates.csv')
 locations <- SpatialPoints(select(locations_df, longitude, latitude))
 
 ctmm::projection(locations) <- '+proj=longlat'
@@ -45,8 +45,8 @@ locations_df <- mutate(locations_df,
                        ID2 = ID1) %>%
   relocate(ID1:ID2)
 
-write.csv(locations_df, file = 'Data/parks-dem.csv', row.names = FALSE)
+write.csv(locations_df, file = 'Data/Attendance/parks-dem.csv', row.names = FALSE)
 
 # check the csv
-read.csv('Data/parks-dem.csv') %>%
+read.csv('Data/Attendance/parks-dem.csv') %>%
   head()
