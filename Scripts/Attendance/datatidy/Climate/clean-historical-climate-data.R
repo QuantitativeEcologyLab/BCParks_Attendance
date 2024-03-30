@@ -7,7 +7,7 @@ library('lubridate')
 #' *needs comments*
 historicaldata <-
   map_dfr(
-    list.files('Data/historical-climate', full.names = TRUE),
+    list.files('Data/Attendance/Climate/historical-climate', full.names = TRUE),
     \(.fname) {
       readr::read_csv(.fname, col_types = '?') %>%
         mutate(file = .fname)
@@ -45,4 +45,4 @@ historicaldata <-
          elevation = Elevation) %>%
   relocate(c(month, dec_date), .after = year)
 
-saveRDS(historicaldata, 'Data/historical-climate-data.rds')
+saveRDS(historicaldata, 'Data/Attendance/Climate/historical-climate-data.rds')

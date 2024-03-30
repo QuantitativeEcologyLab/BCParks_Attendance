@@ -7,7 +7,7 @@ d <-
   # list all files, and import each of the CSVs
   map_dfr(
     list.files(
-      'Data/climate-projections/parks-dem',
+      'Data/Attendance/Climate/climate-projections/parks-dem',
       full.names = TRUE,
       pattern = '@'),
     \(.fname) {
@@ -56,4 +56,4 @@ d <-
   # move month column to after the year one
   relocate(month, .after = year)
 
-saveRDS(d, 'Data/climate-projections/monthly-climate-projections.rds')
+saveRDS(d, 'Data/Attendance/Climate/climate-projections/monthly-climate-projections.rds')
